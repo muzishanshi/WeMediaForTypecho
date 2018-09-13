@@ -20,6 +20,8 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2018-09-13 修复了可通过审查元素修改单价的bug
+
 2018-07-28 新增评论积分和积分商城系统
 
 2018-07-25 第一版本实现

@@ -3,7 +3,7 @@
  * WeMedia（自媒体）Typecho用户中心付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.2
+ * @version 1.0.3
  * @link http://www.tongleer.com/
  * @date 2018-07-28
  */
@@ -83,7 +83,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 插件配置面板
     public static function config(Typecho_Widget_Helper_Form $form){
 		//版本检查
-		$version=file_get_contents('http://api.tongleer.com/interface/WeMedia.php?action=update&version=2');
+		$version=file_get_contents('http://api.tongleer.com/interface/WeMedia.php?action=update&version=3');
 		$div=new Typecho_Widget_Helper_Layout();
 		$div->html('版本检查：'.$version.'
 			<h6>使用方法</h6>
