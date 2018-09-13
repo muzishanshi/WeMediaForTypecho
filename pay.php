@@ -7,7 +7,6 @@ $prefix = $db->getPrefix();
 $action = isset($_POST['action']) ? addslashes($_POST['action']) : '';
 if($action=='feepay'){
 	$feetype = isset($_POST['feetype']) ? addslashes($_POST['feetype']) : '';
-	$feeprice = isset($_POST['feeprice']) ? addslashes($_POST['feeprice']) : '';
 	$cid = isset($_POST['cid']) ? intval($_POST['cid']) : '';
 	$uid = isset($_POST['uid']) ? intval($_POST['uid']) : '';
 	$returnurl = isset($_POST['returnurl']) ? addslashes($_POST['returnurl']) : '';
@@ -15,6 +14,9 @@ if($action=='feepay'){
 	$options = Typecho_Widget::widget('Widget_Options');
 	$option=$options->plugin('WeMedia');
 	$plug_url = $options->pluginUrl;
+	
+	$queryContent= $db->select()->from('table.contents')->where('cid = ?', $cid); 
+	$rowContent = $db->fetchRow($queryContent);
 	
 	$Ispay = new ispayService($option->ispayid, $option->ispaykey);
 	//设置时区
@@ -27,7 +29,7 @@ if($action=='feepay'){
 	//订单标题
 	$Request['Subject'] = "WeMediaForTypecho插件";
 	//交易金额（单位分）
-	$Request['Money'] = $feeprice*100;
+	$Request['Money'] = $rowContent["wemedia_price"]*100;
 	//随机生成订单号
 	$Request['orderNumber'] = date("YmdHis") . rand(100000, 999999);
 	//附加数据（没有可不填）
