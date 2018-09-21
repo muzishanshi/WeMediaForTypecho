@@ -53,7 +53,7 @@ if($action=='feepay'){
 		'feeprice'=>$Request['Money']/100,
 		'feetype'     =>  $feetype,
 		'feestatus'=>0,
-		'feeinstime'=>date('Y-m-d H:i:s',Typecho_Date::time())
+		'feeinstime'=>date('Y-m-d H:i:s',time())
 	);
 	$insert = $db->insert('table.wemedia_fee_item')->rows($data);
 	$insertId = $db->query($insert);

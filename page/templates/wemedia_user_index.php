@@ -124,11 +124,16 @@ $rowItem = $this->db->fetchAll($queryItem);
 							<td>
 								<?php
 								switch($value["feetype"]){
-									case "alipay":echo "支付宝支付";break;
-									case "wxpay":echo "微信支付";break;
+									case "alipay":
+									case "ALIPAY":
+										echo "支付宝支付";break;
+									case "wxpay":
+									case "WEIXIN_DAIXIAO":
+										echo "微信支付";break;
 									case "qqpay":echo "QQ钱包支付";break;
 									case "bank_pc":echo "网银支付";break;
 									case "tlepay":echo "同乐支付";break;
+									default:echo "其他";break;
 								}
 								?>
 							</td>
@@ -266,11 +271,16 @@ $rowItem = $this->db->fetchAll($queryItem);
 							<td>
 								<?php
 								switch($value["feetype"]){
-									case "alipay":echo "支付宝支付";break;
-									case "wxpay":echo "微信支付";break;
+									case "alipay":
+									case "ALIPAY":
+										echo "支付宝支付";break;
+									case "wxpay":
+									case "WEIXIN_DAIXIAO":
+										echo "微信支付";break;
 									case "qqpay":echo "QQ钱包支付";break;
 									case "bank_pc":echo "网银支付";break;
 									case "tlepay":echo "同乐支付";break;
+									default:echo "其他";break;
 								}
 								?>
 							</td>
