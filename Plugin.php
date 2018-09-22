@@ -303,7 +303,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
         $form->addInput($wemedia_yz_client_secret);
 		$wemedia_yz_shop_id = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_shop_id', null, '', _t('有赞授权店铺id'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的授权店铺id'));
         $form->addInput($wemedia_yz_shop_id);
-		$wemedia_yz_redirect_url = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_redirect_url', null, '', _t('有赞消息推送网址'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的消息推送网址'));
+		$wemedia_yz_redirect_url = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_redirect_url', array("value"), $plug_url.'/WeMedia/notify_url.php', _t('有赞消息推送网址'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的消息推送网址'));
         $form->addInput($wemedia_yz_redirect_url);
 		$wemedia_yz_shoptype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_yz_shoptype', array(
             'oauth'=>_t('工具型'),
