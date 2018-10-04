@@ -570,7 +570,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			$content.='
 			<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
 				'.$qrimg.'
-				<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后查看内容</span>
+				<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
 				<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
 					<!--
 					<span class="yzts" style="font-size:18px;float:left;">方式：</span>
