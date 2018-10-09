@@ -501,7 +501,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		date_default_timezone_set('Asia/Shanghai');
 		$youzan_config=@unserialize(ltrim(file_get_contents(dirname(__FILE__).'/config/youzan_config.php'),'<?php die; ?>'));
 		$day = floor((time()-strtotime($youzan_config["instime"]))/3600/24);
-		if($day<7){
+		if($youzan_config["access_token"]!=null&&$day<7){
 			return $youzan_config["access_token"];
 		}else{
 			$token = new YZGetTokenClient( $client_id , $client_secret );
