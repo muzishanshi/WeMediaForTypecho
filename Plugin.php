@@ -526,7 +526,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		require_once dirname(__FILE__).'/libs/youzan/YZGetTokenClient.php';
 		require_once dirname(__FILE__).'/libs/youzan/YZTokenClient.php';
 		$token=self::getYouzanPayToken($client_id,$client_secret,$shop_id,$redirect_url,$shoptype);
-		if($token["access_token"]==null){
+		if($token==null){
 		    return null;
 		}
 		$client = new YZTokenClient($token);
@@ -594,7 +594,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					<input type="hidden" name="uid" id="uid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
 				</form>
 				<div style="clear:left;"></div>
-				<span style="color:#00BF30">点击付款或扫描右侧二维码支付后即可阅读隐藏内容。</span><div class="cl"></div>
+				<span style="color:#00BF30">点击付款或扫描二维码支付后即可阅读隐藏内容。</span><div class="cl"></div>
 				<span style="color:#00BF30">'.$wemedia_info.'</span>
 				<script src="http://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 				<script>
