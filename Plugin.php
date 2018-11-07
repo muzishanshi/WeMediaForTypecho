@@ -374,7 +374,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		  `goodspoint` int(11) DEFAULT 0 COMMENT "消费积分",
 		  `goodsinstime` datetime DEFAULT NULL,
 		  PRIMARY KEY (`goodsid`)
-		) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;');
+		) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;');
 	}
 	
 	/*创建积分消费数据表*/
@@ -389,7 +389,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		  `pointstatus` smallint(2) DEFAULT "0" COMMENT "0：兑换申请，1：兑换成功，2：兑换失败",
 		  `pointinstime` datetime DEFAULT NULL,
 		  PRIMARY KEY (`pointid`)
-		) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;');
+		) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;');
 	}
 	
 	/*创建提现订单数据表*/
@@ -400,11 +400,11 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		  `moneyid` bigint(20) NOT NULL AUTO_INCREMENT,
 		  `moneyuid` bigint(20) DEFAULT NULL,
 		  `moneynum` double(10,2) DEFAULT NULL,
-		  `moneytype` enum("alipay") COLLATE utf8_bin DEFAULT "alipay",
+		  `moneytype` enum("alipay") COLLATE utf8_general_ci DEFAULT "alipay",
 		  `moneystatus` smallint(2) DEFAULT "0" COMMENT "0：提现申请，1：提现成功，2：提现失败",
 		  `moneyinstime` datetime DEFAULT NULL,
 		  PRIMARY KEY (`moneyid`)
-		) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;');
+		) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;');
 	}
 	
 	/*公共方法：将页面写入数据库*/
