@@ -526,6 +526,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		require_once dirname(__FILE__).'/libs/youzan/YZGetTokenClient.php';
 		require_once dirname(__FILE__).'/libs/youzan/YZTokenClient.php';
 		$token=self::getYouzanPayToken($client_id,$client_secret,$shop_id,$redirect_url,$shoptype);
+		if($token["access_token"]==null){
+		    return null;
+		}
 		$client = new YZTokenClient($token);
 		$method = 'youzan.pay.qrcode.create';
 		$api_version = '3.0.0';
