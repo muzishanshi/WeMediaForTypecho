@@ -355,7 +355,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		  `feecid` bigint(20) DEFAULT NULL,
 		  `feeuid` bigint(20) DEFAULT NULL,
 		  `feeprice` double(10,2) DEFAULT NULL,
-		  `feetype` enum("alipay","ALIPAY","wxpay","WEIXIN_DAIXIAO","qqpay","bank_pc","tlepay") COLLATE utf8_general_ci DEFAULT "alipay",
+		  `feetype` enum("alipay","wxpay","WEIXIN_DAIXIAO","qqpay","bank_pc","tlepay") COLLATE utf8_general_ci DEFAULT "alipay",
 		  `feestatus` smallint(2) DEFAULT "0" COMMENT "订单状态：0、未付款；1、付款成功；2、付款失败",
 		  `feeinstime` datetime DEFAULT NULL,
 		  PRIMARY KEY (`feeid`)
