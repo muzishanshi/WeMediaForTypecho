@@ -77,9 +77,9 @@ $rowItem = $this->db->fetchAll($queryItem);
 		}
 		$i=($page_now_buy-1)*$page_rec<0?0:($page_now_buy-1)*$page_rec;
 		if($this->user->group=='administrator'){
-			$queryBuyItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->join('table.users', 'table.wemedia_fee_item.feeuid = table.users.uid',Typecho_Db::INNER_JOIN)->offset($i)->limit($page_rec); 
+			$queryBuyItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->join('table.users', 'table.wemedia_fee_item.feeuid = table.users.uid',Typecho_Db::INNER_JOIN)->order('feeinstime',Typecho_Db::SORT_DESC)->offset($i)->limit($page_rec); 
 		}else if($this->user->group!=NULL&&$this->user->group!='administrator'){
-			$queryBuyItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->where('feeuid = ?', Typecho_Cookie::get('__typecho_uid'))->offset($i)->limit($page_rec); 
+			$queryBuyItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->where('feeuid = ?', Typecho_Cookie::get('__typecho_uid'))->order('feeinstime',Typecho_Db::SORT_DESC)->offset($i)->limit($page_rec); 
 		}
 		$rowBuyItem = $this->db->fetchAll($queryBuyItem);
 		?>
@@ -218,9 +218,9 @@ $rowItem = $this->db->fetchAll($queryItem);
 			}
 			$i=($page_now-1)*$page_rec<0?0:($page_now-1)*$page_rec;
 			if($this->user->group=='administrator'){
-				$querySellItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->offset($i)->limit($page_rec); 
+				$querySellItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->order('feeinstime',Typecho_Db::SORT_DESC)->offset($i)->limit($page_rec); 
 			}else if($this->user->group!=NULL&&$this->user->group!='administrator'){
-				$querySellItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->where('authorId = ?', Typecho_Cookie::get('__typecho_uid'))->offset($i)->limit($page_rec); 
+				$querySellItem= $this->db->select()->from('table.wemedia_fee_item')->join('table.contents', 'table.wemedia_fee_item.feecid = table.contents.cid',Typecho_Db::INNER_JOIN)->order('feeinstime',Typecho_Db::SORT_DESC)->where('authorId = ?', Typecho_Cookie::get('__typecho_uid'))->offset($i)->limit($page_rec); 
 			}
 			$rowSellItem = $this->db->fetchAll($querySellItem);
 		  ?>
