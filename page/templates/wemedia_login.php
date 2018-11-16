@@ -118,9 +118,9 @@ $(function(){
 			if(isInputEmail){
 				var data=JSON.parse(data);
 				if(data.status=="mailok"){
-					$("#emailmsg").html('<font color="green">此邮箱可以注册</font>');
+					$("#emailmsg").html('<font color="green"></font>');
 				}else if(data.status=="mailrepeat"){
-					$("#emailmsg").html('<font color="red">此邮箱已注册</font>');
+					$("#emailmsg").html('<font color="green">此邮箱已注册，若密码正确可直接登陆，否则需换一个。</font>');
 				}else if(data.status=="mailerror"){
 					$("#emailmsg").html('<font color="red">此邮箱格式错误</font>');
 				}
@@ -174,6 +174,8 @@ $(function(){
 			}else if(data.status=="reg"){
 				$("#action").val("submitreg");
 				$("#wemediaLoginForm").submit();
+			}else if(data.status=="NotAllowReg"){
+				$("#passwordmsg").html('<font color="red">抱歉，暂不允许注册。</font>');
 			}else if(data.status=="passworderror"){
 				$("#passwordmsg").html('<font color="red">用户密码不正确</font>');
 			}else if(data.status=="codenull"){
@@ -183,7 +185,7 @@ $(function(){
 			}else if(data.status=="mailerror"){
 				$("#emailmsg").html('<font color="red">此邮箱格式错误</font>');
 			}else if(data.status=="mailrepeat"){
-				$("#emailmsg").html('<font color="red">此邮箱已注册</font>');
+				$("#emailmsg").html('<font color="green">此邮箱已注册，若密码正确可直接登陆，否则需换一个。</font>');
 			}else if(data.status=="passwordnull"){
 				$("#passwordmsg").html('<font color="red">请填写密码</font>');
 			}
