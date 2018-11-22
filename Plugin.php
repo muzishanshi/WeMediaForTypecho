@@ -113,9 +113,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		//付费文章管理
 		$div = new Typecho_Widget_Helper_Layout();
 		$divstr1='
-			<link rel="stylesheet" href="http://cdn.amazeui.org/amazeui/2.7.2/css/amazeui.min.css"/>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/css/amazeui.min.css"/>
 			<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-			<script src="http://cdn.amazeui.org/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
 			<div style="background-color:#fff;overflow:scroll; height:260px; width:100%; border: solid 0px #aaa; margin: 0 auto;">
 			  <table class="am-table am-table-bordered am-table-striped am-text-nowrap">
 				<caption>
