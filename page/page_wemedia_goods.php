@@ -23,7 +23,10 @@ if(strpos($this->permalink,'?')){
 
 $id = isset($_GET['id']) ? addslashes($_GET['id']) : '';
 ?>
-<?php $this->need('header.php');?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/css/amazeui.min.css"/>
+<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
+<script src="https://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
 <style>
 .page-main{
 	background-color:#fff;
@@ -181,4 +184,3 @@ $id = isset($_GET['id']) ? addslashes($_GET['id']) : '';
 	?>
 </section>
 <!-- end content section -->
-<?php $this->need('footer.php');?>
