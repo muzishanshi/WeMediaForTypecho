@@ -91,8 +91,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<span><p>第二步：在编写的原创文章中间通过点击编辑器摘要按钮，插入<!--more-->代码，下方文字即为付费内容；</p></span>
 			<span><p>第三步：在每位用户的原创文章列表都可以单独指定是否付费，管理员可以在本插件设置页面进行设置，比如下方的文章管理；</p></span>
 			<span>
-				第四步：将以下代码放到主题目录下post.php中输出内容的位置进行替换（如：parseContent($this)）即可；
-				<pre>&lt;?php WeMedia_Plugin::parseContent($this); ?></pre>
+				<p>
+					第四步：将以下代码放到主题目录下post.php中输出内容的位置进行替换即可，如：<br />
+					&lt;?php parseContent($this); ?>替换成&lt;?php echo WeMedia_Plugin::parseContent($this); ?><br />
+					或者<br />
+					$this->content替换成WeMedia_Plugin::parseContent($this)<br />
+					或者<br />
+					类似这种&lt;?php echo $this->content; ?>的替换成&lt;?php echo WeMedia_Plugin::parseContent($this); ?>
+				</p>
 			</span>
 			<span><p>第五步：等待其他用户购买对应付费文章；</p></span>
 			<span><p>第六步：有买家付款后即可查看付费内容，卖家可以到用户中心查看订单；</p></span>
@@ -612,6 +618,6 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			</div>
 			';
 		}
-		echo $content;
+		return $content;
 	}
 }
