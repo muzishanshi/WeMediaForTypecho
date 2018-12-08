@@ -32,6 +32,10 @@ $msg = json_decode(urldecode($msg),true);
  */
 if($data['type'] == "trade_TradePaid"){
 	$qrNameArr=explode("|",$msg["qr_info"]["qr_name"]);
+	$feecookie="";
+	if($qrNameArr[4]=="n"){
+		$feecookie=$qrNameArr[5];
+	}
 	$data = array(
 		'feeid'   =>  $data['id'],
 		'feecid'   =>  $qrNameArr[1],
@@ -39,7 +43,8 @@ if($data['type'] == "trade_TradePaid"){
 		'feeprice'=>$qrNameArr[3],
 		'feetype'     =>  $msg["full_order_info"]["order_info"]["pay_type_str"],
 		'feestatus'=>1,
-		'feeinstime'=>date('Y-m-d H:i:s',time())
+		'feeinstime'=>date('Y-m-d H:i:s',time()),
+		'feecookie'=>$feecookie
 	);
 	$insert = $db->insert('table.wemedia_fee_item')->rows($data);
 	$insertId = $db->query($insert);

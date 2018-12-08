@@ -24,6 +24,8 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		self::createTableWemediaMoneyItem($db);
 		self::createTableWemediaPointCost($db);
 		self::createTableWemediaGoods($db);
+		self::alterColumn($db,$prefix.'wemedia_fee_item','feecookie','varchar(255) DEFAULT NULL');
+		self::alterColumn($db,$prefix.'contents','wemedia_islogin','enum("y","n") DEFAULT "n"');
 		//判断目录权限，并将插件文件写入主题目录
 		self::funWriteThemePage($db,'page_wemedia_goods.php');
 		self::funWriteThemePage($db,'page_wemedia_user.php');
@@ -97,7 +99,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					或者<br />
 					$this->content替换成WeMedia_Plugin::parseContent($this)<br />
 					或者<br />
-					类似这种&lt;?php echo $this->content; ?>的替换成&lt;?php echo WeMedia_Plugin::parseContent($this); ?>
+					类似这种&lt;?php echo $this->content; ?>的替换成<font color="red">&lt;?php echo WeMedia_Plugin::parseContent($this); ?></font>
 				</p>
 			</span>
 			<span><p>第五步：等待其他用户购买对应付费文章；</p></span>
@@ -148,7 +150,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		  <div class="am-u-md-8 am-u-sm-centered">
 			<form class="am-form" id="feeForm">
 			  <fieldset class="am-form-set">
-				<input type="text" id="price" value="" />
+				单价：<input type="text" id="price" value="" />
+				免登录<input type="radio" name="wemedia_islogin" value="n">
+				需登录<input type="radio" name="wemedia_islogin" value="y">
 			  </fieldset>
 			  <input type="hidden" id="cid" value="" />
 			  <button type="submit" class="am-btn am-btn-primary am-btn-block">确认付费</button>
@@ -273,7 +277,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 				$("#price").val($("#price").val().replace(/^(\-)*(\d+)\.(\d\d).*$/,"$1$2.$3"));
 			});
 			$("#feeForm").submit(function(){
-				$.post("'.$plug_url.'/WeMedia/ajax/change_fee.php",{action:"confirmFee",cid:$("#cid").val(),price:$("#price").val()},function(data){
+				$.post("'.$plug_url.'/WeMedia/ajax/change_fee.php",{action:"confirmFee",cid:$("#cid").val(),price:$("#price").val(),islogin:$("#feeForm input[name=\"wemedia_islogin\"]:checked").val()},function(data){
 					location.href="plugins.php";
 				});
 				return false;
@@ -297,6 +301,8 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$div->html($divstr1.$divstr2.$divstr3);
 		$div->render();
 		//配置信息
+		$wemedia_cookietime = new Typecho_Widget_Helper_Form_Element_Text('wemedia_cookietime', array('value'), 1, _t('免登录Cookie保存时间(天)'), _t('指定使用免登录付费后几天内可以查看隐藏内容，默认为1天，不会记录到买入订单中。'));
+        $form->addInput($wemedia_cookietime);
 		/*
 		$ispayid = new Typecho_Widget_Helper_Form_Element_Text('ispayid', null, '', _t('ispayid'), _t('在<a href="https://www.ispay.cn/" target="_blank">ispay官网</a>注册的payId'));
         $form->addInput($ispayid->addRule('required', _t('ispayid不能为空！')));
@@ -318,13 +324,13 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
         $form->addInput($wemedia_yz_shoptype->addRule('enum', _t(''), array('oauth', 'self')));
 		
 		$mailsmtp = new Typecho_Widget_Helper_Form_Element_Text('mailsmtp', null, '', _t('smtp服务器(已验证QQ企业邮箱和126邮箱可成功发送)'), _t('用于发送邮箱验证码及其他邮件服务的smtp服务器地址'));
-        $form->addInput($mailsmtp->addRule('required', _t('smtp服务器不能为空！')));
+        $form->addInput($mailsmtp);
 		$mailport = new Typecho_Widget_Helper_Form_Element_Text('mailport', null, '', _t('smtp服务器端口'), _t('用于发送邮箱验证码及其他邮件服务的smtp服务器端口'));
-        $form->addInput($mailport->addRule('required', _t('smtp服务器端口不能为空！')));
+        $form->addInput($mailport);
 		$mailuser = new Typecho_Widget_Helper_Form_Element_Text('mailuser', null, '', _t('smtp服务器邮箱用户名'), _t('用于发送邮箱验证码及其他邮件服务的smtp服务器邮箱用户名'));
-        $form->addInput($mailuser->addRule('required', _t('smtp服务器邮箱用户名不能为空！')));
+        $form->addInput($mailuser);
 		$mailpass = new Typecho_Widget_Helper_Form_Element_Password('mailpass', null, '', _t('smtp服务器邮箱密码'), _t('用于发送邮箱验证码及其他邮件服务的smtp服务器邮箱密码'));
-        $form->addInput($mailpass->addRule('required', _t('smtp服务器邮箱密码不能为空！')));
+        $form->addInput($mailpass);
 		
 		$point = new Typecho_Widget_Helper_Form_Element_Text('point', array('value'), 1, _t('积分/评论'), _t('每个有效评论的积分数，默认为1，积分用户兑换商品。'));
         $form->addInput($point->addRule('required', _t('需要输入一个积分数')));
@@ -528,7 +534,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      * 获得有赞支付二维码
      * @access public
      */
-    public static function getYouzanPayQR($client_id,$client_secret,$shop_id,$redirect_url,$shoptype,$cid,$uid,$title,$price){
+    public static function getYouzanPayQR($client_id,$client_secret,$shop_id,$redirect_url,$shoptype,$cid,$uid,$title,$price,$islogin,$cookie){
 		require_once dirname(__FILE__).'/libs/youzan/YZGetTokenClient.php';
 		require_once dirname(__FILE__).'/libs/youzan/YZTokenClient.php';
 		$token=self::getYouzanPayToken($client_id,$client_secret,$shop_id,$redirect_url,$shoptype);
@@ -539,13 +545,40 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$method = 'youzan.pay.qrcode.create';
 		$api_version = '3.0.0';
 		$my_params = [
-			'qr_name' => str_replace('|','',$title).'|'.$cid.'|'.$uid.'|'.$price,
+			'qr_name' => str_replace('|','',$title).'|'.$cid.'|'.$uid.'|'.$price.'|'.$islogin.'|'.$cookie,
 			'qr_price' => $price*100,
 			'qr_type' => "QR_TYPE_DYNAMIC",
 		];
 		$my_files = [];
 		$payqrcode=$client->post($method, $api_version, $my_params, $my_files);
 		return $payqrcode;
+	}
+	
+	/**
+	 * @param $codeLength   指定要生成的长度
+	 * @param $codeCount    指定需要的个数
+	 * @return array    生成字符串的集合
+	 */
+	public static function randomCode($codeLength, $codeCount){
+		$str1 = '1234567890';
+		$str2 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$str3 = 'abcdefghijklmnopqrstuvwxyz';
+		$arr = [$str1 , $str2 , $str3] ;
+		$code_list = array();    // 接收随机数的数组
+		// 生产制定个数
+		for ($j = 1; $j <= $codeCount; $j++) {
+			$code = "";
+			for ($i = 1; $i <= $codeLength; $i++) {  // 生成指定位随机数
+				$str = implode('',$arr);
+				$code .= $str[mt_rand(0, strlen($str) - 1)];
+			}
+			if (!in_array($code, $code_list)) {
+				$code_list[$j] = $code;
+			} else {
+				$j--;
+			}
+		}
+		return $code_list;
 	}
 	
 	/**
@@ -564,59 +597,105 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$content=trim($obj->content);
 		$query= $db->select()->from('table.contents')->where('cid = ?', $obj->cid); 
 		$row = $db->fetchRow($query);
-		$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecid = ?', $obj->cid)->where('feeuid = ?', Typecho_Cookie::get('__typecho_uid'))->where('feestatus = ?', 1); 
-		$rowItem = $db->fetchRow($queryItem);
-		$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
-		$rowUser = $db->fetchRow($queryUser);
-		$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
-		if($row['wemedia_isFee']=='y'&&count($rowItem)==0&&$row['authorId']!=Typecho_Cookie::get('__typecho_uid')){
-			$content=explode('<!--more-->',$content)[0];
-			$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,Typecho_Cookie::get('__typecho_uid'),$obj->title,$row['wemedia_price']);
-			$qrimg="";
-			if(Typecho_Cookie::get('__typecho_uid')!=""){
-				$qrimg='<img class="wxpic" align="right" src="'.$payqrcode["response"]['qr_code'].'" style="width:150px;height:150px;margin-left:20px;display:inline;border:none" width="150" height="150"  alt="'.$obj->title.'" />';
+		if($row['wemedia_isFee']=='y'&&$row['authorId']!=Typecho_Cookie::get('__typecho_uid')){
+			if($row["wemedia_islogin"]=="n"){
+				if(!isset($_COOKIE["TypechoReadyPayCookie"])){
+					$cookietime=$option->wemedia_cookietime==""?1:$option->wemedia_cookietime;
+					setcookie("TypechoReadyPayCookie",self::randomCode(10,1)[1], time()+3600*24*$cookietime);
+				}
+				$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $_COOKIE["TypechoReadyPayCookie"]); 
+				$rowItem = $db->fetchRow($queryItem);
+				$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
+				$rowUser = $db->fetchRow($queryUser);
+				$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
+				if(count($rowItem)==0){
+					$content=explode('<!--more-->',$content)[0];
+					$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,0,$obj->title,$row['wemedia_price'],$row["wemedia_islogin"],$_COOKIE["TypechoReadyPayCookie"]);
+					$qrimg='<img class="wxpic" align="right" src="'.$payqrcode["response"]['qr_code'].'" style="width:150px;height:150px;margin-left:20px;display:inline;border:none" width="150" height="150"  alt="'.$obj->title.'" />';
+					$content.='
+					<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
+						'.$qrimg.'
+						<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
+						<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
+							<div style="clear:left;"></div>
+							<span class="yzts" style="font-size:18px;float:left;">价格：</span>
+							<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
+							<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+							<input type="hidden" name="action" value="feepay" />
+							<input type="hidden" name="cid" value="'.$obj->cid.'" />
+							<input type="hidden" name="returnurl" value="'.$obj->permalink.'" />
+						</form>
+						<div style="clear:left;"></div>
+						<span style="color:#00BF30">点击付款或扫描二维码支付后'.$option->wemedia_cookietime.'天内即可阅读隐藏内容。</span><div class="cl"></div>
+						<span style="color:#00BF30">'.$wemedia_info.'</span>
+						<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+						<script>
+							$(function() {
+								$("#contentPayForm").submit(function(){
+									window.open("'.$payqrcode["response"]['qr_url'].'");
+									return false;
+								});
+							});
+						</script>
+					</div>
+					';
+				}
+			}else if($row["wemedia_islogin"]=="y"){
+				$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecid = ?', $obj->cid)->where('feeuid = ?', Typecho_Cookie::get('__typecho_uid'))->where('feestatus = ?', 1); 
+				$rowItem = $db->fetchRow($queryItem);
+				$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
+				$rowUser = $db->fetchRow($queryUser);
+				$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
+				if(count($rowItem)==0){
+					$content=explode('<!--more-->',$content)[0];
+					$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,Typecho_Cookie::get('__typecho_uid'),$obj->title,$row['wemedia_price'],$row["wemedia_islogin"]);
+					$qrimg="";
+					if(Typecho_Cookie::get('__typecho_uid')!=""){
+						$qrimg='<img class="wxpic" align="right" src="'.$payqrcode["response"]['qr_code'].'" style="width:150px;height:150px;margin-left:20px;display:inline;border:none" width="150" height="150"  alt="'.$obj->title.'" />';
+					}
+					$content.='
+					<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
+						'.$qrimg.'
+						<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
+						<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
+							<!--
+							<span class="yzts" style="font-size:18px;float:left;">方式：</span>
+							<select name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
+								<option value="alipay">支付宝支付</option>
+								<option value="wxpay">微信支付</option>
+								<option value="qqpay">QQ钱包支付</option>
+								<option value="bank_pc">网银支付</option>
+							</select>
+							-->
+							<div style="clear:left;"></div>
+							<span class="yzts" style="font-size:18px;float:left;">价格：</span>
+							<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
+							<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+							<input type="hidden" name="action" value="feepay" />
+							<input type="hidden" name="cid" value="'.$obj->cid.'" />
+							<input type="hidden" name="returnurl" value="'.$obj->permalink.'" />
+							<input type="hidden" name="uid" id="uid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
+						</form>
+						<div style="clear:left;"></div>
+						<span style="color:#00BF30">登陆后点击付款或扫描二维码支付后即可阅读隐藏内容。</span><div class="cl"></div>
+						<span style="color:#00BF30">'.$wemedia_info.'</span>
+						<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+						<script>
+							$(function() {
+								$("#contentPayForm").submit(function(){
+									if($("#uid").val()==""){
+										alert("请先登录");
+										return false;
+									}
+									window.open("'.$payqrcode["response"]['qr_url'].'");
+									return false;
+								});
+							});
+						</script>
+					</div>
+					';
+				}
 			}
-			$content.='
-			<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
-				'.$qrimg.'
-				<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
-				<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
-					<!--
-					<span class="yzts" style="font-size:18px;float:left;">方式：</span>
-					<select name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
-						<option value="alipay">支付宝支付</option>
-						<option value="wxpay">微信支付</option>
-						<option value="qqpay">QQ钱包支付</option>
-						<option value="bank_pc">网银支付</option>
-					</select>
-					-->
-					<div style="clear:left;"></div>
-					<span class="yzts" style="font-size:18px;float:left;">价格：</span>
-					<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
-					<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
-					<input type="hidden" name="action" value="feepay" />
-					<input type="hidden" name="cid" value="'.$obj->cid.'" />
-					<input type="hidden" name="returnurl" value="'.$obj->permalink.'" />
-					<input type="hidden" name="uid" id="uid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
-				</form>
-				<div style="clear:left;"></div>
-				<span style="color:#00BF30">登陆后点击付款或扫描二维码支付后即可阅读隐藏内容。</span><div class="cl"></div>
-				<span style="color:#00BF30">'.$wemedia_info.'</span>
-				<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-				<script>
-					$(function() {
-						$("#contentPayForm").submit(function(){
-							if($("#uid").val()==""){
-								alert("请先登录");
-								return false;
-							}
-							window.open("'.$payqrcode["response"]['qr_url'].'");
-							return false;
-						});
-					});
-				</script>
-			</div>
-			';
 		}
 		return $content;
 	}

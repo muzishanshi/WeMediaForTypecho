@@ -57,7 +57,8 @@ if($action=='submitaddarticle'){
 }else if($action=='submitfeearticle'){
 	$feecid = isset($_POST['feecid']) ? addslashes($_POST['feecid']) : '';
 	$wemedia_price = isset($_POST['wemedia_price']) ? addslashes($_POST['wemedia_price']) : '';
-	$update = $this->db->update('table.contents')->rows(array('wemedia_price'=>$wemedia_price,'wemedia_isFee'=>'y'))->where('cid=?',$feecid);
+	$wemedia_islogin = isset($_POST['wemedia_islogin']) ? addslashes($_POST['wemedia_islogin']) : '';
+	$update = $this->db->update('table.contents')->rows(array('wemedia_price'=>$wemedia_price,'wemedia_isFee'=>'y','wemedia_islogin'=>$wemedia_islogin))->where('cid=?',$feecid);
 	$updateRows= $this->db->query($update);
 	$this->response->redirect($url.'?page=article');
 }
@@ -318,6 +319,8 @@ button.close {
 			<div class="am-modal-hd">设置单价</div>
 			<div class="am-modal-bd">
 			  <input type="text" name="wemedia_price" id="wemedia_price" class="am-modal-prompt-input">
+			  免登录<input type="radio" name="wemedia_islogin" value="n">
+			  需登录<input type="radio" name="wemedia_islogin" value="y">
 			</div>
 			<div class="am-modal-footer">
 			  <input type="hidden" name="action" value="submitfeearticle" />

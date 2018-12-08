@@ -264,7 +264,11 @@ $rowItem = $this->db->fetchAll($queryItem);
 								<?php
 								$queryBuyer= $this->db->select()->from('table.users')->where('uid = ?', $value["feeuid"]); 
 								$rowBuyer = $this->db->fetchRow($queryBuyer);
-								echo $rowBuyer["mail"];
+								if($rowBuyer){
+									echo $rowBuyer["mail"];
+								}else{
+									echo "&nbsp;";
+								}
 								?>
 							</td>
 							<td><span class="am-badge am-badge-success"><?=$value["feeprice"];?></span></td>
