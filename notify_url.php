@@ -33,14 +33,14 @@ $msg = json_decode(urldecode($msg),true);
 if($data['type'] == "trade_TradePaid"){
 	$qrNameArr=explode("|",$msg["qr_info"]["qr_name"]);
 	$feecookie="";
-	if($qrNameArr[4]=="n"){
-		$feecookie=$qrNameArr[5];
+	if($qrNameArr[3]=="n"){
+		$feecookie=$qrNameArr[4];
 	}
 	$data = array(
 		'feeid'   =>  $data['id'],
-		'feecid'   =>  $qrNameArr[1],
-		'feeuid'     =>  $qrNameArr[2],
-		'feeprice'=>$qrNameArr[3],
+		'feecid'   =>  $qrNameArr[0],
+		'feeuid'     =>  $qrNameArr[1],
+		'feeprice'=>$qrNameArr[2],
 		'feetype'     =>  $msg["full_order_info"]["order_info"]["pay_type_str"],
 		'feestatus'=>1,
 		'feeinstime'=>date('Y-m-d H:i:s',time()),

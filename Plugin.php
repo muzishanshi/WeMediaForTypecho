@@ -545,7 +545,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$method = 'youzan.pay.qrcode.create';
 		$api_version = '3.0.0';
 		$my_params = [
-			'qr_name' => str_replace('|','',$title).'|'.$cid.'|'.$uid.'|'.$price.'|'.$islogin.'|'.$cookie,
+			'qr_name' => $cid.'|'.$uid.'|'.$price.'|'.$islogin.'|'.$cookie,
 			'qr_price' => $price*100,
 			'qr_type' => "QR_TYPE_DYNAMIC",
 		];
