@@ -309,13 +309,13 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$ispaykey = new Typecho_Widget_Helper_Form_Element_Text('ispaykey', null, '', _t('ispaykey'), _t('在<a href="https://www.ispay.cn/" target="_blank">ispay官网</a>注册的payKey'));
         $form->addInput($ispaykey->addRule('required', _t('ispayid不能为空！')));
 		*/
-		$wemedia_yz_client_id = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_client_id', null, '', _t('有赞client_id'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的client_id'));
+		$wemedia_yz_client_id = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_client_id', null, '', _t('有赞client_id'), _t('在<a href="https://www.youzanyun.com/app/sdk" target="_blank">有赞App开店</a>授权绑定有赞微小店APP的店铺后注册的client_id'));
         $form->addInput($wemedia_yz_client_id);
-		$wemedia_yz_client_secret = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_client_secret', null, '', _t('有赞client_secret'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的client_secret'));
+		$wemedia_yz_client_secret = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_client_secret', null, '', _t('有赞client_secret'), _t('在<a href="https://www.youzanyun.com/app/sdk" target="_blank">有赞App开店</a>授权绑定有赞微小店APP的店铺后注册的client_secret'));
         $form->addInput($wemedia_yz_client_secret);
-		$wemedia_yz_shop_id = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_shop_id', null, '', _t('有赞授权店铺id'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的授权店铺id'));
+		$wemedia_yz_shop_id = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_shop_id', null, '', _t('有赞授权店铺id'), _t('在<a href="https://www.youzanyun.com/app/sdk" target="_blank">有赞App开店</a>授权绑定有赞微小店APP的店铺后注册的授权店铺id'));
         $form->addInput($wemedia_yz_shop_id);
-		$wemedia_yz_redirect_url = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_redirect_url', array("value"), $plug_url.'/WeMedia/notify_url.php', _t('有赞消息推送网址'), _t('在<a href="https://www.youzanyun.com/" target="_blank">有赞云官网</a>授权绑定有赞微小店APP的店铺后注册的消息推送网址'));
+		$wemedia_yz_redirect_url = new Typecho_Widget_Helper_Form_Element_Text('wemedia_yz_redirect_url', array("value"), $plug_url.'/WeMedia/notify_url.php', _t('有赞消息推送网址'), _t('在<a href="https://www.youzanyun.com/app/sdk" target="_blank">有赞App开店</a>授权绑定有赞微小店APP的店铺后注册的消息推送网址'));
         $form->addInput($wemedia_yz_redirect_url);
 		$wemedia_yz_shoptype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_yz_shoptype', array(
             'oauth'=>_t('工具型'),
