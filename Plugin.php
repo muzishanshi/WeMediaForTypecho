@@ -610,6 +610,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 				$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
 				if(count($rowItem)==0){
 					$content=explode('<!--more-->',$content)[0];
+					if($_COOKIE["TypechoReadyPayCookie"]==""){
+						return $content;
+					}
 					$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,0,$obj->title,$row['wemedia_price'],$row["wemedia_islogin"],$_COOKIE["TypechoReadyPayCookie"]);
 					$qrimg='<img class="wxpic" align="right" src="'.$payqrcode["response"]['qr_code'].'" style="width:150px;height:150px;margin-left:20px;display:inline;border:none" width="150" height="150"  alt="'.$obj->title.'" />';
 					$content.='
