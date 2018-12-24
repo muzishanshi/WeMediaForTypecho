@@ -3,9 +3,9 @@
  * WeMedia（自媒体）Typecho用户中心付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.5
+ * @version 1.0.6
  * @link http://www.tongleer.com/
- * @date 2018-12-08
+ * @date 2018-12-24
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
@@ -85,7 +85,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 插件配置面板
     public static function config(Typecho_Widget_Helper_Form $form){
 		//版本检查
-		$version=file_get_contents('https://tongleer.com/api/interface/WeMedia.php?action=update&version=5');
+		$version=file_get_contents('https://tongleer.com/api/interface/WeMedia.php?action=update&version=6');
 		$div=new Typecho_Widget_Helper_Layout();
 		$div->html('版本检查：'.$version.'
 			<h6>使用方法</h6>
@@ -520,13 +520,17 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			$keys['kdt_id'] = $shop_id;
 			$keys['redirect_uri'] = $redirect_url;
 			$token=$token->get_token( $shoptype , $keys );
-			file_put_contents(dirname(__FILE__).'/config/youzan_config.php','<?php die; ?>'.serialize(array(
-				'access_token'=>$token['access_token'],
-				'expires_in'=>$token['expires_in'],
-				'scope'=>$token['scope'],
+			$configdir=dirname(__FILE__).'/config/';
+			if(!is_dir($configdir)){
+				mkdir ($configdir, 0777, true );
+			}
+			file_put_contents($configdir.'youzan_config.php','<?php die; ?>'.serialize(array(
+				'access_token'=>@$token['access_token'],
+				'expires_in'=>@$token['expires_in'],
+				'scope'=>@$token['scope'],
 				'instime'=>date('Y-m-d H:i:s',time())
 			)));
-			return $token['access_token'];
+			return @$token['access_token'];
 		}
 	}
 	
@@ -601,23 +605,24 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			if($row["wemedia_islogin"]=="n"){
 				if(!isset($_COOKIE["TypechoReadyPayCookie"])){
 					$cookietime=$option->wemedia_cookietime==""?1:$option->wemedia_cookietime;
-					setcookie("TypechoReadyPayCookie",self::randomCode(10,1)[1], time()+3600*24*$cookietime);
+					$randomCode=self::randomCode(10,1)[1];
+					setcookie("TypechoReadyPayCookie",$randomCode, time()+3600*24*$cookietime);
+					$TypechoReadyPayCookie=$randomCode;
+				}else{
+					$TypechoReadyPayCookie=$_COOKIE["TypechoReadyPayCookie"];
 				}
-				$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $_COOKIE["TypechoReadyPayCookie"]); 
+				$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $TypechoReadyPayCookie); 
 				$rowItem = $db->fetchRow($queryItem);
 				$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
 				$rowUser = $db->fetchRow($queryUser);
 				$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
 				if(count($rowItem)==0){
 					$content=explode('<!--more-->',$content)[0];
-					if($_COOKIE["TypechoReadyPayCookie"]==""){
-						return $content;
-					}
-					$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,0,$obj->title,$row['wemedia_price'],$row["wemedia_islogin"],$_COOKIE["TypechoReadyPayCookie"]);
+					$payqrcode=self::getYouzanPayQR($option->wemedia_yz_client_id,$option->wemedia_yz_client_secret,$option->wemedia_yz_shop_id,$option->wemedia_yz_redirect_url,$option->wemedia_yz_shoptype,$obj->cid,0,$obj->title,$row['wemedia_price'],$row["wemedia_islogin"],$TypechoReadyPayCookie);
 					$qrimg='<img class="wxpic" align="right" src="'.$payqrcode["response"]['qr_code'].'" style="width:150px;height:150px;margin-left:20px;display:inline;border:none" width="150" height="150"  alt="'.$obj->title.'" />';
 					$content.='
 					<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
-						'.$qrimg.'
+						'.($payqrcode==null?"<span style=float:right;>请先配置插件支付参数</span>":$qrimg).'
 						<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
 						<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
 							<div style="clear:left;"></div>
@@ -658,7 +663,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					}
 					$content.='
 					<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
-						'.$qrimg.'
+						'.($payqrcode==null?"<span style=float:right;>请先配置插件支付参数</span>":$qrimg).'
 						<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后并刷新页面查看内容</span>
 						<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php">
 							<!--
