@@ -15,7 +15,7 @@ if($searchtext==''){
 	$queryTotal= $db->select()->from('table.contents')->join('table.users', 'table.contents.authorId = table.users.uid',Typecho_Db::INNER_JOIN)->where('type = ?','post')->where('status = ?','publish')->where('title like ? ', '%'.$searchtext.'%')->order('table.contents.created',Typecho_Db::SORT_DESC);
 }
 $resultTotal = $db->fetchAll($queryTotal);
-$page_rec=1;
+$page_rec=10;
 $totalrec=count($resultTotal);
 $page=ceil($totalrec/$page_rec);
 
@@ -49,22 +49,24 @@ if($searchtext==''){
 }
 $result = $db->fetchAll($query);
 $divstr='';
+$key=0;
 foreach($result as $value){
 	$querySort= $db->select()->from('table.metas')->join('table.relationships', 'table.metas.mid = table.relationships.mid',Typecho_Db::INNER_JOIN)->where('cid = ?', $value['cid']); 
 	$rowSort = $db->fetchRow($querySort);
 	$queryFeeItem= $db->select()->from('table.wemedia_fee_item')->where('feecid = ?', $value['cid'])->where('feeuid = ?', $value['uid'])->where('feestatus = ?', 1); 
 	$rowFeeItem = $db->fetchAll($queryFeeItem);
 	
-	$arr['data_content']['commentsNum'] = $value['commentsNum'];
-	$arr['data_content']['feeItemCount'] = count($rowFeeItem);
-	$arr['data_content']['title'] = $value['title'];
-	$arr['data_content']['author'] = $value['screenName']==""?$value['name']:$value['screenName'];
-	$arr['data_content']['sortName'] = $rowSort['name'];
-	$arr['data_content']['created'] = date('Y-m-d H:i:s',$value['created']);
-	
-	$arr['data_content']['wemedia_isFee'] = $value['wemedia_isFee'];
-	$arr['data_content']['cid'] = $value['cid'];
-	$arr['data_content']['wemedia_price'] = $value['wemedia_price'];
+	$arr['data_content'][$key]['commentsNum'] = $value['commentsNum'];
+	$arr['data_content'][$key]['feeItemCount'] = count($rowFeeItem);
+	$arr['data_content'][$key]['title'] = $value['title'];
+	$arr['data_content'][$key]['author'] = $value['screenName']==""?$value['name']:$value['screenName'];
+	$arr['data_content'][$key]['sortName'] = $rowSort['name'];
+	$arr['data_content'][$key]['created'] = date('Y-m-d H:i:s',$value['created']);
+	$arr['data_content'][$key]['wemedia_isFee'] = $value['wemedia_isFee'];
+	$arr['data_content'][$key]['wemedia_islogin'] = $value['wemedia_islogin'];
+	$arr['data_content'][$key]['cid'] = $value['cid'];
+	$arr['data_content'][$key]['wemedia_price'] = $value['wemedia_price'];
+	$key++;
 }
 echo json_encode($arr);
 ?>

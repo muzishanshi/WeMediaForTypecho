@@ -1,14 +1,16 @@
 <?php
 include '../../../config.inc.php';
-require_once 'libs/ispay/lib/Ispay.class.php';
+require_once 'libs/spay.php';
 $db = Typecho_Db::get();
 $prefix = $db->getPrefix();
+date_default_timezone_set('Asia/Shanghai');
 
 $action = isset($_POST['action']) ? addslashes($_POST['action']) : '';
-if($action=='feepay'){
+if($action=='spaysubmit'){
 	$feetype = isset($_POST['feetype']) ? addslashes($_POST['feetype']) : '';
-	$cid = isset($_POST['cid']) ? intval($_POST['cid']) : '';
-	$uid = isset($_POST['uid']) ? intval($_POST['uid']) : '';
+	$feecookie = isset($_POST['feecookie']) ? addslashes($_POST['feecookie']) : '';
+	$cid = isset($_POST['cid']) ? intval(urldecode($_POST['cid'])) : '';
+	$uid = isset($_POST['uid']) ? intval($_POST['uid']) : 0;
 	$returnurl = isset($_POST['returnurl']) ? addslashes($_POST['returnurl']) : '';
 	
 	$options = Typecho_Widget::widget('Widget_Options');
@@ -18,86 +20,46 @@ if($action=='feepay'){
 	$queryContent= $db->select()->from('table.contents')->where('cid = ?', $cid); 
 	$rowContent = $db->fetchRow($queryContent);
 	
-	$Ispay = new ispayService($option->ispayid, $option->ispaykey);
-	//设置时区
-	date_default_timezone_set('Asia/Shanghai');
-	//商户编号
-	$Request=array();
-	$Request['payId'] = $option->ispayid;
-	//支付通道
-	$Request['payChannel'] = $feetype;
-	//订单标题
-	$Request['Subject'] = "WeMediaForTypecho插件";
-	//交易金额（单位分）
-	$Request['Money'] = $rowContent["wemedia_price"]*100;
-	//随机生成订单号
-	$Request['orderNumber'] = date("YmdHis") . rand(100000, 999999);
-	//附加数据（没有可不填）
-	$Request['attachData'] = $returnurl;
-	//异步通知地址
-	$Request['Notify_url'] = $plug_url."/WeMedia/notify_url.php";;
-	//客户端同步跳转通知地址
-	$Request['Return_url'] = $plug_url."/WeMedia/return_url.php";;
-	//签名（加密算法详见开发文档）
-	$Request['Sign'] = $Ispay -> Sign($Request);
+	$pdata['orderNumber']=date("YmdHis") . rand(100000, 999999);
+	$pdata['Money']=$rowContent["wemedia_price"];
+	$pdata['Notify_url']=$option->spay_wxpay_notify_url;
+	$pdata['Return_url']=$option->spay_wxpay_return_url;
+	$pdata['SPayId']=$option->spay_wxpay_id;
 	
-	if($feetype!='tlepay'&&($Request['orderNumber']==''||$Request['payChannel']==''||$Request['Money']=='')){
-		header("location:http://127.0.0.1");
-		exit;
-	}
-	
-	$data = array(
-		'feeid'   =>  $Request['orderNumber'],
-		'feecid'   =>  $cid,
-		'feeuid'     =>  $uid,
-		'feeprice'=>$Request['Money']/100,
-		'feetype'     =>  $feetype,
-		'feestatus'=>0,
-		'feeinstime'=>date('Y-m-d H:i:s',time())
-	);
-	$insert = $db->insert('table.wemedia_fee_item')->rows($data);
-	$insertId = $db->query($insert);
-	
-	switch($feetype){
-		case "alipay":
-		case "wxpay":
-		case "qqpay":
-		case "bank_pc":
-			echo '
-				<link rel="stylesheet" href="http://cdn.amazeui.org/amazeui/2.7.2/css/amazeui.min.css"/>
-				<script src="http://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-				<script src="http://cdn.amazeui.org/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
-				<link rel="alternate icon" type="image/png" href="http://www.tongleer.com/wp-content/themes/D8/img/favicon.png">
-				<div class="am-modal am-modal-loading am-modal-no-btn" tabindex="-1" id="my-modal-loading">
-				  <div class="am-modal-dialog">
-					<div class="am-modal-hd">正在付款中...</div>
-					<div class="am-modal-bd">
-					  <span class="am-icon-spinner am-icon-spin"></span>
-					</div>
-				  </div>
-				</div>
-				<form id="orderform" method="post" action="https://pay.ispay.cn/core/api/request/pay/">
-					<input type="hidden" name="payChannel" value="'.$Request['payChannel'].'" />
-					<input type="hidden" name="payId" value="'.$Request['payId'].'" />
-					<input type="hidden" name="Subject" value="'.$Request['Subject'].'">
-					<input type="hidden" name="attachData" value="'.$Request['attachData'].'">
-					<input type="hidden" name="Money" value="'.$Request['Money'].'">
-					<input type="hidden" name="orderNumber" value="'.$Request['orderNumber'].'">
-					<input type="hidden" name="Notify_url" value="'.$Request['Notify_url'].'">
-					<input type="hidden" name="Return_url" value="'.$Request['Return_url'].'">
-					<input type="hidden" name="Sign" value="'.$Request['Sign'].'">
-				</form>
-				<script>
-					$(function() {
-						$("#my-modal-loading").modal();
-						$("#orderform").submit();
-					});
-				</script>
-			';
-			break;
-		case "tlepay":
-			
-			break;
+	$ret=spay_wpay_pay($pdata,$option->spay_wxpay_key,$feetype);
+	$url=$ret['url'];
+	if($url!=''){
+		$data = array(
+			'feeid'   =>  $pdata['orderNumber'],
+			'feecid'   =>  $cid,
+			'feeuid'     =>  $uid,
+			'feeprice'=>$pdata['Money'],
+			'feetype'     =>  $feetype,
+			'feestatus'=>0,
+			'feeinstime'=>date('Y-m-d H:i:s',time()),
+			'feecookie'=>$feecookie
+		);
+		$insert = $db->insert('table.wemedia_fee_item')->rows($data);
+		$insertId = $db->query($insert);
+		header("Location: {$url}");
+	}else{
+		?>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		订单号:
+		<?php echo $ret['orderNumber'];?><br>
+		付款金额:
+		<?php echo $ret['Money'];?><br>
+		扫描以下二维码进行付款,
+		请在
+		<?php echo $ret['LatestPayTime'];?>
+		之前付款完成 
+		否则将有可能支付不到账<br>
+		<?php
+		  if(!empty($ret['error']))
+			die('出现错误:'.$ret['error'])
+		?>
+		<img src="<?php echo $ret['qrcode'];?>">
+		<?php
 	}
 }
 ?>

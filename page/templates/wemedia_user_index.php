@@ -128,6 +128,7 @@ $rowItem = $this->db->fetchAll($queryItem);
 									case "ALIPAY":
 										echo "支付宝支付";break;
 									case "wxpay":
+									case "wx":
 									case "WEIXIN_DAIXIAO":
 										echo "微信支付";break;
 									case "qqpay":echo "QQ钱包支付";break;
@@ -279,6 +280,7 @@ $rowItem = $this->db->fetchAll($queryItem);
 									case "ALIPAY":
 										echo "支付宝支付";break;
 									case "wxpay":
+									case "wx":
 									case "WEIXIN_DAIXIAO":
 										echo "微信支付";break;
 									case "qqpay":echo "QQ钱包支付";break;

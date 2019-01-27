@@ -1,6 +1,5 @@
 <?php
 date_default_timezone_set('Asia/Shanghai');
-include __TYPECHO_ROOT_DIR__.__TYPECHO_PLUGIN_DIR__."/WeMedia/include/function.php";
 if(strpos($this->permalink,'?')){
 	$url=substr($this->permalink,0,strpos($this->permalink,'?'));
 }else{
@@ -74,8 +73,8 @@ switch($action){
 			"ownerId"=>Typecho_Cookie::get('__typecho_uid'),
 			"mail"=>$commentmail,
 			"url"=>$commenturl,
-			"ip"=>getIP(),
-			"agent"=>$_SERVER['HTTP_USER_AGENT'],
+			"ip"=>Typecho_Request::getInstance()->getIp(),
+			"agent"=>Typecho_Request::getInstance()->getAgent(),
 			"text"=>$commenttext,
 			"type"=>'comment',
 			"status"=>'approved',
@@ -101,7 +100,7 @@ switch($action){
   <div class="admin-content">
     <div class="admin-content-body">
   <div class="am-cf am-padding am-padding-bottom-0">
-	<div class="am-fl am-cf"><strong class="am-text-primary am-text-lg">评论</strong> / <small>管理</small></div>
+	<div class="am-fl am-cf"><strong class="am-text-primary am-text-lg">评论</strong> / <small>不包括游客评论</small></div>
   </div>
 
   <hr>
