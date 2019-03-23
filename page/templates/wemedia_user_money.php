@@ -70,7 +70,7 @@ if($action=='submitmoney'){
           <div class="am-g am-margin-top">
             <div class="am-u-sm-4 am-u-md-2 am-text-right">提现金额</div>
             <div class="am-u-sm-8 am-u-md-10">
-				<input type="text" name="moneynum" size="4" maxLength="4" id="moneynum" value="" placeholder="">
+				<input type="text" name="moneynum" size="4" id="moneynum" value="" placeholder="">
 				<small id="moneynummsg"></small>
             </div>
           </div>
@@ -95,7 +95,11 @@ if($action=='submitmoney'){
 <a href="#" class="am-icon-btn am-icon-th-list am-show-sm-only admin-menu" data-am-offcanvas="{target: '#admin-offcanvas'}"></a>
 <script>
 $("#moneyForm").submit(function(){
-	if($("#moneynum").val()>$("#moneybalance").text()){
+	if($("#moneynum").val()==""){
+		$("#moneynummsg").html('<font color="red">请输入提现金额</font>');
+		return false;
+	}
+	if(parseFloat($("#moneynum").val())>parseFloat($("#moneybalance").text())){
 		$("#moneynummsg").html('<font color="red">提现金额不能超过账户余额</font>');
 		return false;
 	}
