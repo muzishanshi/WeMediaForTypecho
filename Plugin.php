@@ -3,9 +3,9 @@
  * WeMedia（自媒体）Typecho用户中心付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.7
+ * @version 1.0.8
  * @link http://www.tongleer.com/
- * @date 2019-01-27
+ * @date 2019-03-23
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
@@ -96,7 +96,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
 			<script>
-				$.post("'.$plug_url.'/WeMedia/ajax/update.php",{version:7},function(data){
+				$.post("'.$plug_url.'/WeMedia/ajax/update.php",{version:8},function(data){
 					$("#versionCode").html(data);
 				});
 			</script>
@@ -612,7 +612,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					}else{
 						$TypechoReadyPayCookie=$_COOKIE["TypechoReadyPayCookie"];
 					}
-					$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $TypechoReadyPayCookie)->where('feestatus = ?', 1); 
+					$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $TypechoReadyPayCookie)->where('feestatus = ?', 1)->where('feecid = ?', $obj->cid); 
 					$rowItem = $db->fetchRow($queryItem);
 					$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
 					$rowUser = $db->fetchRow($queryUser);
