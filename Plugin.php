@@ -1,16 +1,18 @@
 <?php
 /**
- * WeMedia（自媒体）Typecho用户中心付费阅读插件
+ * WeMediaForTypecho自媒体付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.8
+ * @version 1.0.9
  * @link http://www.tongleer.com/
- * @date 2019-03-23
+ * @date 2019-04-07
  */
+define('WEMEDIA_VERSION', '9');
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
     public static function activate(){
 		Typecho_Plugin::factory('admin/write-post.php')->bottom = array('WeMedia_Plugin', 'tleWeMediaToolbar');
+		Typecho_Plugin::factory('Widget_Archive')->footer = array('WeMedia_Plugin', 'footer');
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
 		self::alterColumn($db,$prefix.'contents','wemedia_isFee','enum("y","n") DEFAULT "n"');
@@ -96,7 +98,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
 			<script>
-				$.post("'.$plug_url.'/WeMedia/ajax/update.php",{version:8},function(data){
+				$.post("'.$plug_url.'/WeMedia/ajax/update.php",{version:'.WEMEDIA_VERSION.'},function(data){
 					$("#versionCode").html(data);
 				});
 			</script>
@@ -106,7 +108,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<span>
 				<p>
 					第二步：在编写的原创文章中间通过点击编辑器的付费按钮（￥），插入以下代码，中间部分即为付费内容；<br />
-					<font color="red">
+					<font color="blue">
 						&lt;!--WeMedia start--><br />
 						付费内容<br />
 						&lt;!--WeMedia end--><br />
@@ -117,14 +119,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<span>
 				<p>
 					第四步：替换主题目录下post.php中输出内容的代码，如：<br />
-					&lt;?php $this->content; ?>替换成<font color="red">&lt;?php echo WeMedia_Plugin::parseContent($this); ?></font><br />
+					&lt;?php $this->content; ?>替换成<font color="blue">&lt;?php echo WeMedia_Plugin::parseContent($this); ?></font><br />
 					如果输出内容是其他代码，在不影响主题自有功能的情况下，页可替换成以上代码。<br />
 					继续替换主题目录下archive.php或index.php中输出摘要或内容的代码，没有则不替换，如：<br />
-					&lt;?php $this->excerpt(140, "..."); ?>替换成<font color="red">&lt;?php echo WeMedia_Plugin::parseExcerpt($this,140, "..."); ?></font>
+					&lt;?php $this->excerpt(140, "..."); ?>替换成<font color="blue">&lt;?php echo WeMedia_Plugin::parseExcerpt($this,140, "..."); ?></font>
 				</p>
 			</span>
-			<h6>增值功能</h6>
 			<span><p>第五步：等待其他用户或游客购买对应付费文章；</p></span>
+			<h6><font color="red">关于用户中心和积分商城模块未经测试仅供参考</font></h6>
 			<span><p>第六步：有网站用户买家付款后即可查看付费内容，卖家可以到用户中心查看订单；</p></span>
 			<span><p>第七步：在用户中心用户可以发表文章、回复评论、设置资料以及提现；</p></span>
 			<span><p>第八步：归纳8步，祝每位有缘之人财源广进，另谢谢使用WeMedia插件，更多功能敬请期待……</p></span>
@@ -326,6 +328,19 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		//配置信息
 		$wemedia_cookietime = new Typecho_Widget_Helper_Form_Element_Text('wemedia_cookietime', array('value'), 1, _t('免登录Cookie保存时间(天)'), _t('指定使用免登录付费后几天内可以查看隐藏内容，默认为1天，不会记录到买入订单中。'));
         $form->addInput($wemedia_cookietime);
+		
+		$wemedia_paytype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_paytype', array(
+            'spay'=>_t('spay'),
+            'payjs'=>_t('payjs')
+        ), 'spay', _t('支付渠道'), _t("选择支付渠道，spay和payjs以下配置二选一即可。"));
+		$form->addInput($wemedia_paytype->addRule('enum', _t(''), array('spay', 'payjs')));
+		
+		$payjs_wxpay_mchid = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_mchid', array('value'), "", _t('payjs商户号'), _t('在<a href="https://payjs.cn/" target="_blank">payjs官网</a>注册的商户号。'));
+        $form->addInput($payjs_wxpay_mchid);
+		$payjs_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_key', array('value'), "", _t('payjs通信密钥'), _t('在<a href="https://payjs.cn/" target="_blank">payjs官网</a>注册的通信密钥。'));
+        $form->addInput($payjs_wxpay_key);
+		$payjs_wxpay_notify_url = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_notify_url', array('value'), $plug_url.'/WeMedia/notify_url.php', _t('payjs异步回调接口'), _t('支付完成后异步回调的接口地址。'));
+        $form->addInput($payjs_wxpay_notify_url);
 		
 		$spay_wxpay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_id', array('value'), "", _t('SPay微信支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
         $form->addInput($spay_wxpay_id);
@@ -621,9 +636,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$hide_notice='
 						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
 							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
-							<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
 								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
-								<select name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
+								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
 									<!--
 									<option value="alipay">支付宝支付</option>
 									<option value="qqpay">QQ钱包支付</option>
@@ -635,14 +650,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
 								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
-								<input type="hidden" name="action" value="spaysubmit" />
-								<input type="hidden" name="cid" value="'.urlencode($obj->cid).'" />
-								<input type="hidden" name="feecookie" value="'.$TypechoReadyPayCookie.'" />
-								<input type="hidden" name="returnurl" value="'.$obj->permalink.'" />
+								<input type="hidden" name="action" value="paysubmit" />
+								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($obj->cid).'" />
+								<input type="hidden" id="feecookie" name="feecookie" value="'.$TypechoReadyPayCookie.'" />
 							</form>
 							<div style="clear:left;"></div>
 							<span style="color:#00BF30">点击付款支付后'.$option->wemedia_cookietime.'天内即可阅读隐藏内容。</span><div class="cl"></div>
 							<span style="color:#00BF30">'.$wemedia_info.'</span>
+							<span id="wemedia_islogin" style="display:none;">y</span>
 						</div>
 						';
 						$content = str_replace($hide_content[0], $hide_notice, $content);
@@ -659,9 +674,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$hide_notice='
 						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
 							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
-							<form id="contentPayForm" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
 								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
-								<select name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
+								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
 									<!--
 									<option value="alipay">支付宝支付</option>
 									<option value="qqpay">QQ钱包支付</option>
@@ -673,25 +688,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
 								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
-								<input type="hidden" name="action" value="spaysubmit" />
-								<input type="hidden" name="cid" value="'.urlencode($obj->cid).'" />
-								<input type="hidden" name="returnurl" value="'.$obj->permalink.'" />
-								<input type="hidden" name="uid" id="uid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
+								<input type="hidden" name="action" value="paysubmit" />
+								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($obj->cid).'" />
+								<input type="hidden" id="feeuid" name="feeuid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
 							</form>
 							<div style="clear:left;"></div>
 							<span style="color:#00BF30">登陆后点击付款支付后即可阅读隐藏内容。</span><div class="cl"></div>
 							<span style="color:#00BF30">'.$wemedia_info.'</span>
-							<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-							<script>
-								$(function() {
-									$("#contentPayForm").submit(function(){
-										if($("#uid").val()==""){
-											alert("请先登录");
-											return false;
-										}
-									});
-								});
-							</script>
+							<span id="wemedia_islogin" style="display:none;">y</span>
 						</div>
 						';
 						$content = str_replace($hide_content[0], $hide_notice, $content);
@@ -704,5 +708,57 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			}
 		}
 		return $content;
+	}
+	
+	public static function footer(){
+		$options = Typecho_Widget::widget('Widget_Options');
+		$plug_url = $options->pluginUrl;
+		?>
+		<script src="https://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>
+		<script>
+			$("#wemediaPayPost").submit(function(){
+				if($("#wemedia_islogin")=="y"&&$("#feeuid").val()==""){
+					layer.msg("需要先登录");
+					return false;
+				}
+				var str = "确认要付款购买吗？";
+				layer.confirm(str, {
+					btn: ["付款","算了"]
+				}, function(){
+					var ii = layer.load(2, {shade:[0.1,"#fff"]});
+					$.ajax({
+						type : "POST",
+						url : "<?=$plug_url;?>/WeMedia/pay.php",
+						data : {"action":"paysubmit","feetype":$("#feetype").val(),"feecid":$("#feecid").val(),"feeuid":$("#feeuid").val(),"feecookie":$("#feecookie").val()},
+						dataType : "json",
+						success : function(data) {
+							layer.close(ii);
+							if(data.status=="ok"){
+								if(data.type=="spay"){
+									str='<center><div>支持微信付款</div><div><img src="https://www.tongleer.com/api/web/?action=qrcode&url='+data.qrcode+'" width="200" /></div></center>';
+								}else if(data.type=="payjs"){
+									str='<center><div>支持微信付款</div><div><img src="'+data.qrcode+'" width="200" /></div></center>';
+								}
+							}else{
+								str="<center><div>请求支付过程出了一点小问题，稍后重试一次吧！</div></center>";
+							}
+							layer.confirm(str, {
+								btn: ["已付款","算了"]
+							},function(index){
+								window.location.reload();
+								layer.close(index);
+							});
+						},error:function(data){
+							layer.close(ii);
+							layer.msg("服务器错误");
+							return false;
+						}
+					});
+				});
+				return false;
+			});
+		</script>
+		<?php
 	}
 }
