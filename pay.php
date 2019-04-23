@@ -23,20 +23,31 @@ if($action=='paysubmit'){
 	switch($option->wemedia_paytype){
 		case "spay":
 			$time=time();
-			$pdata['orderNumber']=date("YmdHis",$time) . rand(100000, 999999);
-			$pdata['Money']=$rowContent["wemedia_price"];
-			$pdata['Notify_url']=$option->spay_wxpay_notify_url;
-			$pdata['Return_url']=$option->spay_wxpay_return_url;
-			$pdata['SPayId']=$option->spay_wxpay_id;
-			
-			$ret=spay_wpay_pay($pdata,$option->spay_wxpay_key,$feetype);
+			$orderNumber=date("YmdHis",$time) . rand(100000, 999999);
+			if($feetype=="wx"){
+				$pdata['orderNumber']=$orderNumber;
+				$pdata['Money']=$rowContent["wemedia_price"];
+				$pdata['Notify_url']=$option->spay_pay_notify_url;
+				$pdata['Return_url']=$option->spay_pay_return_url;
+				$pdata['SPayId']=$option->spay_wxpay_id;
+				$ret=spay_pay_pay($pdata,$option->spay_wxpay_key,$feetype);
+				$Money=$pdata['Money'];
+			}else if($feetype=="alipay"){
+				$data['total_fee'] = $rowContent["wemedia_price"];
+				$data['partner']= $option->spay_alipay_id;
+				$data['notify_url']= $option->spay_pay_notify_url;
+				$data['return_url']= $option->spay_pay_return_url;
+				$data['out_trade_no']= $orderNumber;
+				$ret=spay_pay_pay($data,$option->spay_alipay_key);
+				$Money=$data['total_fee'];
+			}
 			$url=$ret['url'];
 			if($url!=''){
 				$data = array(
-					'feeid'   =>  $pdata['orderNumber'],
+					'feeid'   =>  $orderNumber,
 					'feecid'   =>  $feecid,
 					'feeuid'     =>  $feeuid,
-					'feeprice'=>$pdata['Money'],
+					'feeprice'=>$Money,
 					'feetype'     =>  $feetype,
 					'feestatus'=>0,
 					'feeinstime'=>date('Y-m-d H:i:s',$time),
@@ -44,7 +55,7 @@ if($action=='paysubmit'){
 				);
 				$insert = $db->insert('table.wemedia_fee_item')->rows($data);
 				$insertId = $db->query($insert);
-				$json=json_encode(array("status"=>"ok","type"=>"spay","qrcode"=>$url));
+				$json=json_encode(array("status"=>"ok","type"=>"spay","channel"=>$feetype,"qrcode"=>$url));
 				echo $json;
 				exit;
 			}
@@ -73,7 +84,7 @@ if($action=='paysubmit'){
 				);
 				$insert = $db->insert('table.wemedia_fee_item')->rows($data);
 				$insertId = $db->query($insert);
-				$json=json_encode(array("status"=>"ok","type"=>"payjs","qrcode"=>$rst["qrcode"]));
+				$json=json_encode(array("status"=>"ok","type"=>"payjs","channel"=>"wx","qrcode"=>$rst["qrcode"]));
 				echo $json;
 				exit;
 				

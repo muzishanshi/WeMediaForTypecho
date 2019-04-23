@@ -3,11 +3,11 @@
  * WeMediaForTypecho自媒体付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.9
+ * @version 1.0.10
  * @link http://www.tongleer.com/
- * @date 2019-04-07
+ * @date 2019-04-23
  */
-define('WEMEDIA_VERSION', '9');
+define('WEMEDIA_VERSION', '10');
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
     public static function activate(){
@@ -344,12 +344,16 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		
 		$spay_wxpay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_id', array('value'), "", _t('SPay微信支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
         $form->addInput($spay_wxpay_id);
-		$spay_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_key', array('value'), "", _t('SPay微信支付安全检验码'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
+		$spay_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_key', array('value'), "", _t('SPay微信支付安全检验码'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的安全校验码key。'));
         $form->addInput($spay_wxpay_key);
-		$spay_wxpay_notify_url = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_notify_url', array('value'), $plug_url.'/WeMedia/notify_url.php', _t('SPay异步回调接口'), _t('支付完成后异步回调的接口地址'));
-        $form->addInput($spay_wxpay_notify_url);
-		$spay_wxpay_return_url = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_return_url', array('value'), $plug_url.'/WeMedia/return_url.php', _t('SPay同步回调接口'), _t('支付完成后同步回调的接口地址'));
-        $form->addInput($spay_wxpay_return_url);
+		$spay_alipay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_alipay_id', array('value'), "", _t('SPay支付宝支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权支付宝支付的合作身份者id。<font color="red">注：支付宝最低单价为0.8元。</font>'));
+        $form->addInput($spay_alipay_id);
+		$spay_alipay_key = new Typecho_Widget_Helper_Form_Element_Text('spay_alipay_key', array('value'), "", _t('SPay支付宝支付安全检验码'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权支付宝支付的安全校验码key。'));
+        $form->addInput($spay_alipay_key);
+		$spay_pay_notify_url = new Typecho_Widget_Helper_Form_Element_Text('spay_pay_notify_url', array('value'), $plug_url.'/WeMedia/notify_url.php', _t('SPay异步回调接口'), _t('支付完成后异步回调的接口地址'));
+        $form->addInput($spay_pay_notify_url);
+		$spay_pay_return_url = new Typecho_Widget_Helper_Form_Element_Text('spay_pay_return_url', array('value'), $plug_url.'/WeMedia/return_url.php', _t('SPay同步回调接口'), _t('支付完成后同步回调的接口地址'));
+        $form->addInput($spay_pay_return_url);
 		
 		$mailsmtp = new Typecho_Widget_Helper_Form_Element_Text('mailsmtp', null, '', _t('smtp服务器(已验证QQ企业邮箱和126邮箱可成功发送)'), _t('用于用户中心发送邮箱验证码及其他邮件服务的smtp服务器地址，QQ企业邮箱：ssl://smtp.exmail.qq.com:465；126邮箱：smtp.126.com:25'));
         $form->addInput($mailsmtp);
@@ -617,6 +621,20 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$query= $db->select()->from('table.contents')->where('cid = ?', $obj->cid); 
 		$row = $db->fetchRow($query);
 		if (preg_match_all('/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i', $content, $hide_content)){
+			if($option->wemedia_paytype=="spay"){
+				$wemedia_paytype='
+					<option value="wx">微信支付</option>
+					<option value="alipay">支付宝支付</option>
+					<!--
+					<option value="qqpay">QQ钱包支付</option>
+					<option value="bank_pc">网银支付</option>
+					-->
+				';
+			}else if($option->wemedia_paytype=="payjs"){
+				$wemedia_paytype='
+					<option value="wx">微信支付</option>
+				';
+			}
 			if($row['wemedia_isFee']=='y'&&$row['authorId']!=Typecho_Cookie::get('__typecho_uid')){
 				if($row["wemedia_islogin"]=="n"){
 					if(!isset($_COOKIE["TypechoReadyPayCookie"])){
@@ -636,15 +654,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$hide_notice='
 						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
 							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
-							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="" target="_blank">
 								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
 								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
-									<!--
-									<option value="alipay">支付宝支付</option>
-									<option value="qqpay">QQ钱包支付</option>
-									<option value="bank_pc">网银支付</option>
-									-->
-									<option value="wx">微信支付</option>
+									'.$wemedia_paytype.'
 								</select>
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
@@ -674,15 +687,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$hide_notice='
 						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
 							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
-							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="'.$plug_url.'/WeMedia/pay.php" target="_blank">
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="" target="_blank">
 								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
 								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
-									<!--
-									<option value="alipay">支付宝支付</option>
-									<option value="qqpay">QQ钱包支付</option>
-									<option value="bank_pc">网银支付</option>
-									-->
-									<option value="wx">微信支付</option>
+									'.$wemedia_paytype.'
 								</select>
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
@@ -718,7 +726,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>
 		<script>
 			$("#wemediaPayPost").submit(function(){
-				if($("#wemedia_islogin")=="y"&&$("#feeuid").val()==""){
+				if($("#wemedia_islogin").html()=="y"&&$("#feeuid").val()==""){
 					layer.msg("需要先登录");
 					return false;
 				}
@@ -736,7 +744,11 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 							layer.close(ii);
 							if(data.status=="ok"){
 								if(data.type=="spay"){
-									str='<center><div>支持微信付款</div><div><img src="https://www.tongleer.com/api/web/?action=qrcode&url='+data.qrcode+'" width="200" /></div></center>';
+									if(data.channel=="wx"){
+										str='<center><div>支持微信付款</div><div><img src="https://www.tongleer.com/api/web/?action=qrcode&url='+data.qrcode+'" width="200" /></div><div><a href="'+data.qrcode+'" target="_blank">跳转支付链接</a></div></center>';
+									}else if(data.channel=="alipay"){
+										str='<center><div>支持支付宝付款</div><div><a href="'+data.qrcode+'" target="_blank">跳转支付链接</a></div></center>';
+									}
 								}else if(data.type=="payjs"){
 									str='<center><div>支持微信付款</div><div><img src="'+data.qrcode+'" width="200" /></div></center>';
 								}

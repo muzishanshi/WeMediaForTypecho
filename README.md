@@ -31,6 +31,11 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2019-04-23 V1.0.10
+
+	1、新增spay支付宝支付；
+	2、修复因为马虎导致的登陆付费判断失效。
+	
 2019-04-07 V1.0.9
 
 	新增payjs微信支付，可通过自己微信直接打款到银行卡了。

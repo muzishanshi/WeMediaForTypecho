@@ -18,25 +18,39 @@ switch($option->wemedia_paytype){
 		$feetype="";
 		if($wxhao){
 			$feetype="wx";
-		}
-		$is=spay_wpay_verify($id,$option->spay_wxpay_key,$feetype);
-		if($is!==false){
-			$updateItem = $db->update('table.wemedia_fee_item')->rows(array('feestatus'=>1))->where('feeid=?',$is["orderNumber"]);
-			$updateItemRows= $db->query($updateItem);
-			
-			$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feeid = ?', $is["orderNumber"]); 
-			$rowItem = $db->fetchRow($queryItem);
-			if($rowItem['feestatus']==1){
-				$queryContents= $db->select()->from('table.contents')->where('cid = ?', $rowItem['feecid']); 
-				$rowContents = $db->fetchRow($queryContents);
-				$queryUser= $db->select()->from('table.users')->where('uid = ?', $rowContents['authorId']); 
-				$rowUser = $db->fetchRow($queryUser);
-				$updateUser = $db->update('table.users')->rows(array('wemedia_money'=>$rowUser['wemedia_money']+$rowItem['feeprice']))->where('uid=?',$rowContents['authorId']);
-				$updateUserRows= $db->query($updateUser);
+			$is=spay_pay_verify($option->spay_wxpay_key,$id,$feetype);
+			if($is!==false){
+				$updateItem = $db->update('table.wemedia_fee_item')->rows(array('feestatus'=>1))->where('feeid=?',$is["orderNumber"]);
+				$updateItemRows= $db->query($updateItem);
+				
+				$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feeid = ?', $is["orderNumber"]); 
+				$rowItem = $db->fetchRow($queryItem);
+				if($rowItem['feestatus']==1){
+					$queryContents= $db->select()->from('table.contents')->where('cid = ?', $rowItem['feecid']); 
+					$rowContents = $db->fetchRow($queryContents);
+					$queryUser= $db->select()->from('table.users')->where('uid = ?', $rowContents['authorId']); 
+					$rowUser = $db->fetchRow($queryUser);
+					$updateUser = $db->update('table.users')->rows(array('wemedia_money'=>$rowUser['wemedia_money']+$rowItem['feeprice']))->where('uid=?',$rowContents['authorId']);
+					$updateUserRows= $db->query($updateUser);
+				}
+				echo 'success';
+			}else{
+				echo 'fail';
 			}
-			echo 'success';
 		}else{
-			echo 'fail';
+			$feetype="alipay";
+			if(spay_pay_verify($option->spay_alipay_key)){
+				$ts = $_POST['trade_status'];    
+				if ($ts == 'TRADE_FINISHED' || $ts == 'TRADE_SUCCESS'){
+					$updateItem = $db->update('table.wemedia_fee_item')->rows(array('feestatus'=>1))->where('feeid=?',$_POST["out_trade_no"]);
+					$updateItemRows= $db->query($updateItem);
+					echo 'success';    
+				}else{
+					echo 'fail';    
+				}
+			}else{
+				echo 'fail';    
+			}
 		}
 		break;
 	case "payjs":
