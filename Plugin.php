@@ -3,16 +3,18 @@
  * WeMediaForTypecho自媒体付费阅读插件
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.10
+ * @version 1.0.11
  * @link http://www.tongleer.com/
- * @date 2019-04-23
+ * @date 2019-08-16
  */
-define('WEMEDIA_VERSION', '10');
+define('WEMEDIA_VERSION', '11');
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
     public static function activate(){
 		Typecho_Plugin::factory('admin/write-post.php')->bottom = array('WeMedia_Plugin', 'tleWeMediaToolbar');
 		Typecho_Plugin::factory('Widget_Archive')->footer = array('WeMedia_Plugin', 'footer');
+		Typecho_Plugin::factory('Widget_Abstract_Contents')->contentEx = array('WeMedia_Plugin', 'contentEx');
+		Typecho_Plugin::factory('Widget_Abstract_Contents')->excerptEx = array('WeMedia_Plugin', 'excerptEx');
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
 		self::alterColumn($db,$prefix.'contents','wemedia_isFee','enum("y","n") DEFAULT "n"');
@@ -118,11 +120,16 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<span><p>第三步：在每位用户的原创文章列表都可以单独指定是否付费，管理员可以在本插件设置页面进行设置，比如下方的文章管理；</p></span>
 			<span>
 				<p>
-					第四步：替换主题目录下post.php中输出内容的代码，如：<br />
+					第四步：以下新旧版本任选其一即可，建议使用新版本，自动匹配隐藏标签规则。<br />
+					<b>【旧版本（需手动修改代码），可选】</b><br />
+					替换主题目录下post.php中输出内容的代码，如：<br />
 					&lt;?php $this->content; ?>替换成<font color="blue">&lt;?php echo WeMedia_Plugin::parseContent($this); ?></font><br />
-					如果输出内容是其他代码，在不影响主题自有功能的情况下，页可替换成以上代码。<br />
+					如果输出内容是其他代码，在不影响主题自有功能的情况下，也可替换成以上代码。<br />
 					继续替换主题目录下archive.php或index.php中输出摘要或内容的代码，没有则不替换，如：<br />
-					&lt;?php $this->excerpt(140, "..."); ?>替换成<font color="blue">&lt;?php echo WeMedia_Plugin::parseExcerpt($this,140, "..."); ?></font>
+					&lt;?php $this->excerpt(140, "..."); ?>替换成<font color="blue">&lt;?php echo WeMedia_Plugin::parseExcerpt($this,140, "..."); ?></font><br />
+					<b>【新版本（自动匹配标签规则）】</b><br />
+					替换主题目录下post.php中输出内容的代码，<font color="blue">若已有自定义的输出内容代码，则可以不替换，例如handsome主题启用后插入付费标签即可隐藏。</font>，如：<br />
+					&lt;?php $this->content; ?>替换成&lt;?php echo $this->content; ?>
 				</p>
 			</span>
 			<span><p>第五步：等待其他用户或游客购买对应付费文章；</p></span>
@@ -588,6 +595,153 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			}
 		</script>
 		<?php
+	}
+	
+	/**
+     * 自动输出摘要
+     * @access public
+     * @return void
+     */
+    public static function excerptEx($html, $widget, $lastResult){
+		$wechatfansRule='/<!--wechatfans start-->([\s\S]*?)<!--wechatfans end-->/i';
+		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
+		$version = substr(Typecho_Widget::widget('Widget_Options')->Version,0,3);
+		if($version<=1.1){
+			$wechatfansRule='/&lt;!--wechatfans start--&gt;([\s\S]*?)&lt;!--wechatfans end--&gt;/i';
+			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
+		}
+		$html=trim($html);
+		if (preg_match_all($wechatfansRule, $html, $hide_words)){
+			$html = str_replace($hide_words[0], '', $html);
+		}
+		if (preg_match_all($WeMediaRule, $html, $hide_words)){
+			$html = str_replace($hide_words[0], '', $html);
+		}
+		$html=Typecho_Common::subStr(strip_tags($html), 0, 140, "...");
+		return $html;
+	}
+	
+	/**
+     * 自动输出内容
+     * @access public
+     * @return void
+     */
+    public static function contentEx($html, $widget, $lastResult){
+		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
+		$version = substr(Typecho_Widget::widget('Widget_Options')->Version,0,3);
+		if($version<=1.1){
+			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
+		}
+		$html = empty( $lastResult ) ? $html : $lastResult;
+		$db = Typecho_Db::get();
+		$options = Typecho_Widget::widget('Widget_Options');
+		$option=$options->plugin('WeMedia');
+		$plug_url = $options->pluginUrl;
+		$html=trim($html);
+		$query= $db->select()->from('table.contents')->where('cid = ?', $widget->cid); 
+		$row = $db->fetchRow($query);
+		if (preg_match_all($WeMediaRule, $html, $hide_content)){
+			if($option->wemedia_paytype=="spay"){
+				$wemedia_paytype='
+					<option value="wx">微信支付</option>
+					<option value="alipay">支付宝支付</option>
+					<!--
+					<option value="qqpay">QQ钱包支付</option>
+					<option value="bank_pc">网银支付</option>
+					-->
+				';
+			}else if($option->wemedia_paytype=="payjs"){
+				$wemedia_paytype='
+					<option value="wx">微信支付</option>
+				';
+			}
+			if($row['wemedia_isFee']=='y'&&$row['authorId']!=Typecho_Cookie::get('__typecho_uid')){
+				if($row["wemedia_islogin"]=="n"){
+					if(!isset($_COOKIE["TypechoReadyPayCookie"])){
+						$cookietime=$option->wemedia_cookietime==""?1:$option->wemedia_cookietime;
+						$randomCode=self::randomCode(10,1)[1];
+						setcookie("TypechoReadyPayCookie",$randomCode, time()+3600*24*$cookietime);
+						$TypechoReadyPayCookie=$randomCode;
+					}else{
+						$TypechoReadyPayCookie=$_COOKIE["TypechoReadyPayCookie"];
+					}
+					$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecookie = ?', $TypechoReadyPayCookie)->where('feestatus = ?', 1)->where('feecid = ?', $widget->cid); 
+					$rowItem = $db->fetchRow($queryItem);
+					$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
+					$rowUser = $db->fetchRow($queryUser);
+					$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
+					if(count($rowItem)==0){
+						$hide_notice='
+						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
+							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="" target="_blank">
+								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
+								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
+									'.$wemedia_paytype.'
+								</select>
+								<div style="clear:left;"></div>
+								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
+								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
+								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input type="hidden" name="action" value="paysubmit" />
+								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($widget->cid).'" />
+								<input type="hidden" id="feecookie" name="feecookie" value="'.$TypechoReadyPayCookie.'" />
+							</form>
+							<div style="clear:left;"></div>
+							<span style="color:#00BF30">点击付款支付后'.$option->wemedia_cookietime.'天内即可阅读隐藏内容。</span><div class="cl"></div>
+							<span style="color:#00BF30">'.$wemedia_info.'</span>
+							<span id="wemedia_islogin" style="display:none;">y</span>
+						</div>
+						';
+						$html = str_replace($hide_content[0], $hide_notice, $html);
+					}else{
+						$html = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $html);
+						$html = str_replace("&lt;","<", $html);
+						$html = str_replace("&gt;",">", $html);
+					}
+				}else if($row["wemedia_islogin"]=="y"){
+					$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feecid = ?', $widget->cid)->where('feeuid = ?', Typecho_Cookie::get('__typecho_uid'))->where('feestatus = ?', 1); 
+					$rowItem = $db->fetchRow($queryItem);
+					$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
+					$rowUser = $db->fetchRow($queryUser);
+					$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
+					if(count($rowItem)==0){
+						$hide_notice='
+						<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%; color:#F00; background-color:#FFF4FF; overflow:hidden; clear:both;">
+							<span style="font-size:18px;">此处内容已经被作者隐藏，请付费后刷新页面查看内容</span>
+							<form id="wemediaPayPost" method="post" style="margin:10px 0;" action="" target="_blank">
+								<span class="yzts" style="font-size:18px;float:left;">方式：</span>
+								<select id="feetype" name="feetype" style="border:none;float:left;width:160px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">
+									'.$wemedia_paytype.'
+								</select>
+								<div style="clear:left;"></div>
+								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
+								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
+								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input type="hidden" name="action" value="paysubmit" />
+								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($widget->cid).'" />
+								<input type="hidden" id="feeuid" name="feeuid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
+							</form>
+							<div style="clear:left;"></div>
+							<span style="color:#00BF30">登陆后点击付款支付后即可阅读隐藏内容。</span><div class="cl"></div>
+							<span style="color:#00BF30">'.$wemedia_info.'</span>
+							<span id="wemedia_islogin" style="display:none;">y</span>
+						</div>
+						';
+						$html = str_replace($hide_content[0], $hide_notice, $html);
+					}else{
+						$html = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $html);
+						$html = str_replace("&lt;","<", $html);
+						$html = str_replace("&gt;",">", $html);
+					}
+				}
+			}else{
+				$html = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $html);
+				$html = str_replace("&lt;","<", $html);
+				$html = str_replace("&gt;",">", $html);
+			}
+		}
+		return $html;
 	}
 	
 	/**

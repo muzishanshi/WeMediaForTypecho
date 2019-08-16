@@ -31,6 +31,11 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2019-08-23 V1.0.11
+
+	1、优化typecho不同版本的匹配标签的规则和自动匹配；
+	2、简化手动修改代码的繁琐情况，甚至无需手动修改代码，即可实现隐藏付费内容。
+	
 2019-04-23 V1.0.10
 
 	1、新增spay支付宝支付；
