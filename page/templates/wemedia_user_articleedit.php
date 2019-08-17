@@ -120,7 +120,7 @@ if($action=='updatearticle'){
 			},
 			toolbarHandlers : {
 				wemedia_fee : function(cm, icon, cursor, selection) {
-					cm.replaceSelection("\r\n<!--more-->\r\n");
+					cm.replaceSelection("\r\n<!--WeMedia start-->\r\n\r\n<!--WeMedia end-->\r\n");
 				}
 			}
 		});
