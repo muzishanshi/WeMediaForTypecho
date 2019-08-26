@@ -15,7 +15,7 @@ if($action=='submitlogin'){
 	$query= $this->db->select()->from('table.users')->where('mail = ?', $mail); 
 	$userData = $this->db->fetchRow($query);
 	$user = Typecho_Widget::widget('Widget_User');
-	$user->login($userData["name"],$password);
+	$user->login($userData["mail"],$password);
 	$this->response->redirect($url);
 }else if($action=='submitreg'){
 	$hasher = new PasswordHash(8, true);
@@ -37,7 +37,7 @@ if($action=='submitlogin'){
 	for ( $i = 0; $i < 5; $i++ ){
 		$randCode .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
 	}
-	$_SESSION['code'] = strtoupper($randCode);
+	$_SESSION['mailcode'] = strtoupper($randCode);
 	
     $this->response->redirect($url);
 }else if($action=='submitforget'){
@@ -48,14 +48,14 @@ if($action=='submitlogin'){
 	$query= $this->db->select()->from('table.users')->where('mail = ?', $this->request->mail); 
 	$userData = $this->db->fetchRow($query);
 	$user = Typecho_Widget::widget('Widget_User');
-	$user->login($userData["name"], $this->request->password);
+	$user->login($userData["mail"], $this->request->password);
 	
 	$randCode = '';
 	$chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHIJKLMNPRSTUVWXYZ23456789';
 	for ( $i = 0; $i < 5; $i++ ){
 		$randCode .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
 	}
-	$_SESSION['code'] = strtoupper($randCode);
+	$_SESSION['mailcode'] = strtoupper($randCode);
 	
     $this->response->redirect($url);
 }
@@ -186,6 +186,8 @@ $(function(){
 				$("#emailmsg").html('<font color="red">此邮箱格式错误</font>');
 			}else if(data.status=="mailrepeat"){
 				$("#emailmsg").html('<font color="green">此邮箱已注册，若密码正确可直接登陆，否则需换一个。</font>');
+			}else if(data.status=="mailnosame"){
+				$("#emailmsg").html('<font color="red">填写邮箱和发送验证码的邮箱不一致</font>');
 			}else if(data.status=="passwordnull"){
 				$("#passwordmsg").html('<font color="red">请填写密码</font>');
 			}
@@ -214,6 +216,8 @@ $(function(){
 					$("#emailmsg").html('<font color="red">账号不存在</font>');
 				}else if(data.status=="codeerror"){
 					$("#codemsg").html('<font color="red">验证码错误</font>');
+				}else if(data.status=="mailnosame"){
+					$("#emailmsg").html('<font color="red">填写邮箱和发送验证码的邮箱不一致</font>');
 				}
 			});
 		}

@@ -29,9 +29,12 @@ if($action=='updateinfo'){
 		$wemedia_isallow="none";
 	}
 	if($rowUser["mail"]!=$email){
-		$sessionCode = isset($_SESSION['code']) ? $_SESSION['code'] : '';
+		$sessionCode = isset($_SESSION['mailcode']) ? $_SESSION['mailcode'] : '';
 		if(strcasecmp($code,$sessionCode)!=0){
 			$this->response->redirect($baseurl."?".$_SERVER['QUERY_STRING']."&error=code");exit;
+		}
+		if (isset($_SESSION["newmail"])&&$email!=$_SESSION["newmail"]) {
+			$this->response->redirect($baseurl."?".$_SERVER['QUERY_STRING']."&error=nosame");exit;
 		}
 	}
 	$userData=array(
@@ -51,7 +54,7 @@ if($action=='updateinfo'){
 	for ( $i = 0; $i < 5; $i++ ){
 		$randCode .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
 	}
-	$_SESSION['code'] = strtoupper($randCode);
+	$_SESSION['mailcode'] = strtoupper($randCode);
 	
 	$this->response->redirect($baseurl."?".$_SERVER['QUERY_STRING']);
 }
@@ -128,7 +131,7 @@ if($operation=='syncpoint'){
               <label for="user-email" class="am-u-sm-3 am-form-label">电子邮件 / Email</label>
               <div class="am-u-sm-9">
                 <input type="email" name="email" id="user-email" value="<?=$rowUser['mail'];?>" placeholder="输入你的电子邮件">
-                <small id="emailmsg"><?php if(@$_GET["error"]==""){echo "邮箱你懂得...";}else if(@$_GET["error"]=="code"){echo '<font color="red">验证码错误</font>';}?></small>
+                <small id="emailmsg"><?php if(@$_GET["error"]==""){echo "邮箱你懂得...";}else if(@$_GET["error"]=="code"){echo '<font color="red">验证码错误</font>';}else if(@$_GET["error"]=="nosame"){echo '<font color="red">填写邮箱和发送验证码的邮箱不一致</font>';}?></small>
               </div>
 			  <div class="am-u-sm-9">
                 <input type="text" name="code" id="user-code" value="" placeholder="(选填)如需修改邮箱，请填写验证码">

@@ -3,9 +3,9 @@
  * WeMediaForTypecho自媒体付费阅读插件<div class="WeMediaUpdateSet"><br /><a href="javascript:;" title="插件因兴趣于闲暇时间所写，故会有代码不规范、不专业和bug的情况，但完美主义促使代码还说得过去，如有bug或使用问题进行反馈即可。">鼠标轻触查看备注</a>&nbsp;<a href="http://club.tongleer.com" target="_blank">论坛</a>&nbsp;<a href="https://www.tongleer.com/api/web/pay.png" target="_blank">打赏</a>&nbsp;<a href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=diamond0422@qq.com" target="_blank">反馈</a></div><style>.WeMediaUpdateSet a{background: #4DABFF;padding: 5px;color: #fff;}</style>
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.11<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=11",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
+ * @version 1.0.12<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=12",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
  * @link http://www.tongleer.com/
- * @date 2019-08-16
+ * @date 2019-08-26
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
@@ -375,6 +375,12 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
         $form->addInput($mailuser);
 		$mailpass = new Typecho_Widget_Helper_Form_Element_Password('mailpass', null, '', _t('smtp服务器邮箱密码'), _t('用于用户中心发送邮箱验证码及其他邮件服务的smtp服务器邮箱密码'));
         $form->addInput($mailpass);
+		$mailsecure = new Typecho_Widget_Helper_Form_Element_Select('mailsecure',array(
+            'ssl' => _t('SSL'),
+            'tls' => _t('TLS'),
+            'none' => _t('无')
+        ), "ssl", _t('安全类型'));
+		$form->addInput($mailsecure);
 		
 		$point = new Typecho_Widget_Helper_Form_Element_Text('point', array('value'), 1, _t('积分/评论'), _t('每个有效评论的积分数，默认为1，积分商城用户兑换商品。'));
         $form->addInput($point->addRule('required', _t('需要输入一个积分数')));
@@ -527,23 +533,29 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 	
 	/*发送给管理员邮件通知*/
 	public static function sendMail($email,$title,$content){
-		require __DIR__ . '/libs/email.class.php';
+		require_once dirname(__FILE__).'/libs/PHPMailer/PHPMailerAutoload.php';
+		$phpMailer = new PHPMailer();
 		$options = Typecho_Widget::widget('Widget_Options');
 		$option=$options->plugin('WeMedia');
-		$smtpserverport =$option->mailport;//SMTP服务器端口//企业QQ:465、126:25
-		$smtpserver = $option->mailsmtp;//SMTP服务器//QQ:ssl://smtp.qq.com、126:smtp.126.com
-		$smtpusermail = $option->mailuser;//SMTP服务器的用户邮箱
-		$smtpemailto = $email;//发送给谁
-		$smtpuser = $option->mailuser;//SMTP服务器的用户帐号
-		$smtppass = $option->mailpass;//SMTP服务器的用户密码
-		$mailtitle = $title;//邮件主题
-		$mailcontent = $content;//邮件内容
-		$mailtype = "HTML";//邮件格式（HTML/TXT）,TXT为文本邮件
-		//************************ 配置信息 ****************************
-		$smtp = new smtp($smtpserver,$smtpserverport,true,$smtpuser,$smtppass);//这里面的一个true是表示使用身份验证,否则不使用身份验证.
-		$smtp->debug = false;//是否显示发送的调试信息
-		$state = $smtp->sendmail($smtpemailto, $smtpusermail, $mailtitle, $mailcontent, $mailtype);
-		return $state;
+		$phpMailer->isSMTP();
+		$phpMailer->SMTPAuth = true;
+		$phpMailer->Host = $option->mailsmtp;
+		$phpMailer->Port = $option->mailport;
+		$phpMailer->Username = $option->mailuser;
+		$phpMailer->Password = $option->mailpass;
+		$phpMailer->isHTML(true);
+		if ('none' != $option->mailsecure) {
+			$phpMailer->SMTPSecure = $option->mailsecure;
+		}
+		$phpMailer->setFrom($option->mailuser, $title);
+		$phpMailer->addAddress($email, $email);
+		$phpMailer->Subject = $title;
+		$phpMailer->Body    = $content;
+		if(!$phpMailer->send()) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 	
 	/**

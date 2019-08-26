@@ -33,13 +33,14 @@ if($action=='checkemail'){
 	for ( $i = 0; $i < 5; $i++ ){
 		$randCode .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
 	}
-	$_SESSION['code'] = strtoupper($randCode);
+	$_SESSION['mailcode'] = strtoupper($randCode);
 
 	$email = isset($_POST['email']) ? addslashes($_POST['email']) : '';
 	$queryPlugins= $db->select('value')->from('table.options')->where('name = ?', 'title'); 
 	$rowPlugins = $db->fetchRow($queryPlugins);
-	WeMedia_Plugin::sendMail($email,'【'.$rowPlugins["value"].'】验证码','欢迎使用【'.$rowPlugins["value"].'】验证码服务，您的验证码是：'.$_SESSION['code']);
-	echo $_SESSION['code'];
+	WeMedia_Plugin::sendMail($email,'【'.$rowPlugins["value"].'】验证码','欢迎使用【'.$rowPlugins["value"].'】验证码服务，您的验证码是：'.$_SESSION['mailcode']);
+	$_SESSION['newmail'] = $email;
+	echo $_SESSION['mailcode'];
 }else if($action=='submit'){
 	session_start();
 	$email = isset($_POST['email']) ? addslashes($_POST['email']) : '';
@@ -58,8 +59,11 @@ if($action=='checkemail'){
 			}
 		}else if(count($userData)==0){
 			if($code!=""){
-				$sessionCode = isset($_SESSION['code']) ? $_SESSION['code'] : '';
+				$sessionCode = isset($_SESSION['mailcode']) ? $_SESSION['mailcode'] : '';
 				if(strcasecmp($code,$sessionCode)==0){
+					if (isset($_SESSION["newmail"])&&$email!=$_SESSION["newmail"]) {
+						echo '{"status":"mailnosame"}';exit;
+					}
 					$query= $db->select()->from('table.users')->where('mail = ?', $email); 
 					$row = $db->fetchRow($query);
 					$check="/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/";
@@ -94,8 +98,11 @@ if($action=='checkemail'){
 	$query= $db->select()->from('table.users')->where('mail = ?', $email); 
 	$userData = $db->fetchRow($query);
 	if(count($userData)>0){
-		$sessionCode = isset($_SESSION['code']) ? $_SESSION['code'] : '';
+		$sessionCode = isset($_SESSION['mailcode']) ? $_SESSION['mailcode'] : '';
 		if(strcasecmp($code,$sessionCode)==0){
+			if (isset($_SESSION["newmail"])&&$email!=$_SESSION["newmail"]) {
+				echo '{"status":"mailnosame"}';exit;
+			}
 			echo '{"status":"forget"}';
 		}else{
 			echo '{"status":"codeerror"}';
