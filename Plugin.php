@@ -1,36 +1,37 @@
 <?php
 /**
- * WeMediaForTypecho自媒体付费阅读插件
+ * WeMediaForTypecho自媒体付费阅读插件<div class="WeMediaUpdateSet"><br /><a href="javascript:;" title="插件因兴趣于闲暇时间所写，故会有代码不规范、不专业和bug的情况，但完美主义促使代码还说得过去，如有bug或使用问题进行反馈即可。">鼠标轻触查看备注</a>&nbsp;<a href="http://club.tongleer.com" target="_blank">论坛</a>&nbsp;<a href="https://www.tongleer.com/api/web/pay.png" target="_blank">打赏</a>&nbsp;<a href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=diamond0422@qq.com" target="_blank">反馈</a></div><style>.WeMediaUpdateSet a{background: #4DABFF;padding: 5px;color: #fff;}</style>
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.11
+ * @version 1.0.11<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=11",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
  * @link http://www.tongleer.com/
  * @date 2019-08-16
  */
-define('WEMEDIA_VERSION', '11');
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
     public static function activate(){
+		WeMedia_Plugin::Judge_database();
 		Typecho_Plugin::factory('admin/write-post.php')->bottom = array('WeMedia_Plugin', 'tleWeMediaToolbar');
 		Typecho_Plugin::factory('Widget_Archive')->footer = array('WeMedia_Plugin', 'footer');
 		Typecho_Plugin::factory('Widget_Abstract_Contents')->contentEx = array('WeMedia_Plugin', 'contentEx');
 		Typecho_Plugin::factory('Widget_Abstract_Contents')->excerptEx = array('WeMedia_Plugin', 'excerptEx');
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
-		self::alterColumn($db,$prefix.'contents','wemedia_isFee','enum("y","n") DEFAULT "n"');
-		self::alterColumn($db,$prefix.'contents','wemedia_price','double(10,2) DEFAULT 0');
-		self::alterColumn($db,$prefix.'users','wemedia_money','double(10,2) DEFAULT 0');
-		self::alterColumn($db,$prefix.'users','wemedia_point','int(11) DEFAULT 0');
-		self::alterColumn($db,$prefix.'users','wemedia_realname','varchar(32) DEFAULT NULL');
-		self::alterColumn($db,$prefix.'users','wemedia_alipay','varchar(32) DEFAULT 0');
-		self::alterColumn($db,$prefix.'users','wemedia_isallow','enum("none","allow","refuse","process") DEFAULT "none"');
-		self::alterColumn($db,$prefix.'users','wemedia_info','varchar(255) DEFAULT NULL');
+		$dbconfig=$db->getConfig();
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'contents','wemedia_isFee','enum("y","n") DEFAULT "n"');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'contents','wemedia_price','double(10,2) DEFAULT 0');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_money','double(10,2) DEFAULT 0');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_point','int(11) DEFAULT 0');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_realname','varchar(32) DEFAULT NULL');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_alipay','varchar(32) DEFAULT 0');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_isallow','enum("none","allow","refuse","process") DEFAULT "none"');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'users','wemedia_info','varchar(255) DEFAULT NULL');
 		self::createTableWemediaFeeItem($db);
 		self::createTableWemediaMoneyItem($db);
 		self::createTableWemediaPointCost($db);
 		self::createTableWemediaGoods($db);
-		self::alterColumn($db,$prefix.'wemedia_fee_item','feecookie','varchar(255) DEFAULT NULL');
-		self::alterColumn($db,$prefix.'contents','wemedia_islogin','enum("y","n") DEFAULT "n"');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'wemedia_fee_item','feecookie','varchar(255) DEFAULT NULL');
+		self::alterColumn($db,$dbconfig[0]->database,$prefix.'contents','wemedia_islogin','enum("y","n") DEFAULT "n"');
 		//判断目录权限，并将插件文件写入主题目录
 		self::funWriteThemePage($db,'page_wemedia_goods.php');
 		self::funWriteThemePage($db,'page_wemedia_user.php');
@@ -86,6 +87,16 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		@unlink(dirname(__FILE__).'/../../themes/'.$rowTheme['value'].'/templates/wemedia_user_water.php');
         return _t('插件已被禁用');
     }
+	
+	private static function Judge_database(){
+        $db= Typecho_Db::get();
+        $getAdapterName = $db->getAdapterName();
+        if(preg_match('/^M|m?ysql$/',$getAdapterName)){
+            return true;
+        }else{
+            throw new Typecho_Plugin_Exception(_t('对不起，使用了不支持的数据库，无法使用此功能，仅支持mysql数据库。'));
+        }
+    }
 
     // 插件配置面板
     public static function config(Typecho_Widget_Helper_Form $form){
@@ -99,12 +110,6 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/css/amazeui.min.css"/>
 			<script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/js/amazeui.min.js" type="text/javascript"></script>
-			<script>
-				$.post("'.$plug_url.'/WeMedia/ajax/update.php",{version:'.WEMEDIA_VERSION.'},function(data){
-					$("#versionCode").html(data);
-				});
-			</script>
-			版本检查：<span id="versionCode"></span>
 			<h6>基础功能</h6>
 			<span><p>第一步：配置下方各项参数；</p></span>
 			<span>
@@ -388,9 +393,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
     }
 	
 	/*修改数据表字段*/
-	public static function alterColumn($db,$table,$column,$define){
+	public static function alterColumn($db,$dbname,$table,$column,$define){
 		$prefix = $db->getPrefix();
-		$query= "select * from information_schema.columns WHERE table_name = '".$table."' AND column_name = '".$column."'";
+		$query= "select * from information_schema.columns WHERE TABLE_SCHEMA='".$dbname."' and table_name = '".$table."' AND column_name = '".$column."'";
 		$row = $db->fetchRow($query);
 		if(count($row)==0){
 			$db->query('ALTER TABLE `'.$table.'` ADD COLUMN `'.$column.'` '.$define.';');
