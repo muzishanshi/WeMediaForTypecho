@@ -31,6 +31,10 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2019-09-07 V1.0.13
+
+	新增手机端长按二维码支付。
+	
 2019-08-26 V1.0.12
 
 	优化了通用的发送邮件方式，修复修改邮箱后使用用户名登陆的bug，改成了使用邮箱登陆。

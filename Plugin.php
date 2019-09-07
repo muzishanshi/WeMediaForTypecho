@@ -3,9 +3,9 @@
  * WeMediaForTypecho自媒体付费阅读插件<div class="WeMediaUpdateSet"><br /><a href="javascript:;" title="插件因兴趣于闲暇时间所写，故会有代码不规范、不专业和bug的情况，但完美主义促使代码还说得过去，如有bug或使用问题进行反馈即可。">鼠标轻触查看备注</a>&nbsp;<a href="http://club.tongleer.com" target="_blank">论坛</a>&nbsp;<a href="https://www.tongleer.com/api/web/pay.png" target="_blank">打赏</a>&nbsp;<a href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=diamond0422@qq.com" target="_blank">反馈</a></div><style>.WeMediaUpdateSet a{background: #4DABFF;padding: 5px;color: #fff;}</style>
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.12<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=12",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
+ * @version 1.0.13<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=13",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
  * @link http://www.tongleer.com/
- * @date 2019-08-26
+ * @date 2019-09-07
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
@@ -344,8 +344,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$wemedia_paytype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_paytype', array(
             'spay'=>_t('spay'),
             'payjs'=>_t('payjs')
-        ), 'spay', _t('支付渠道'), _t("选择支付渠道，spay和payjs以下配置二选一即可。"));
+        ), 'payjs', _t('支付渠道'), _t("选择支付渠道，spay和payjs以下配置二选一即可。关于spay支付作者集成后已不再续费，推荐选择payjs支付，payjs是可以直接打款到微信的，比较安全快捷，相比官方微信支付还是可以的。"));
 		$form->addInput($wemedia_paytype->addRule('enum', _t(''), array('spay', 'payjs')));
+		
+		$wemedia_payjstype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_payjstype', array(
+            'native'=>_t('扫码支付'),
+            'cashier'=>_t('收银台支付')
+        ), 'native', _t('payjs支付方式'), _t("选择payjs支付方式，扫码支付为主动扫描二维码适合电脑端使用，收银台支付支持手机端长按二维码方式支付。"));
+		$form->addInput($wemedia_payjstype->addRule('enum', _t(''), array('native', 'cashier')));
 		
 		$payjs_wxpay_mchid = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_mchid', array('value'), "", _t('payjs商户号'), _t('在<a href="https://payjs.cn/" target="_blank">payjs官网</a>注册的商户号。'));
         $form->addInput($payjs_wxpay_mchid);
@@ -354,9 +360,9 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$payjs_wxpay_notify_url = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_notify_url', array('value'), $plug_url.'/WeMedia/notify_url.php', _t('payjs异步回调接口'), _t('支付完成后异步回调的接口地址。'));
         $form->addInput($payjs_wxpay_notify_url);
 		
-		$spay_wxpay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_id', array('value'), "", _t('SPay微信支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
+		$spay_wxpay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_id', array('value'), "", _t('SPay微信(QQ)支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
         $form->addInput($spay_wxpay_id);
-		$spay_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_key', array('value'), "", _t('SPay微信支付安全检验码'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的安全校验码key。'));
+		$spay_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_key', array('value'), "", _t('SPay微信(QQ)支付安全检验码'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的安全校验码key。'));
         $form->addInput($spay_wxpay_key);
 		$spay_alipay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_alipay_id', array('value'), "", _t('SPay支付宝支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权支付宝支付的合作身份者id。<font color="red">注：支付宝最低单价为0.8元。</font>'));
         $form->addInput($spay_alipay_id);
@@ -920,8 +926,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 									}else if(data.channel=="alipay"){
 										str='<center><div>支持支付宝付款</div><div><a href="'+data.qrcode+'" target="_blank">跳转支付链接</a></div></center>';
 									}
-								}else if(data.type=="payjs"){
+								}else if(data.type=="payjsnative"){
 									str='<center><div>支持微信付款</div><div><img src="'+data.qrcode+'" width="200" /></div></center>';
+								}else if(data.type=="payjscashier"){
+									open("<?=$plug_url;?>/WeMedia/pay.php?feetype="+$("#feetype").val()+"&feecid="+$("#feecid").val()+"&feeuid="+$("#feeuid").val()+"&feecookie="+$("#feecookie").val());
 								}
 							}else{
 								str="<center><div>请求支付过程出了一点小问题，稍后重试一次吧！</div></center>";

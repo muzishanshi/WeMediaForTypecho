@@ -3,7 +3,8 @@ class Payjs{
     private $url = 'https://payjs.cn/api/native';
     private $key = '';// 填写通信密钥
     private $mchid = '';// 特写商户号
-    public function __construct($data=null,$mchid="",$key,$notify_url="") {
+    public function __construct($data=null,$mchid="",$key,$notify_url="",$url="https://payjs.cn/api/native") {
+		$this->url = $url;
         $this->data = $data;
 		$this->mchid = $mchid;
 		$this->key = $key;
