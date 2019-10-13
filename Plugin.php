@@ -338,6 +338,12 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$div->html($divstr1.$divstr2.$divstr3);
 		$div->render();
 		//配置信息
+		$isEnableJQuery = new Typecho_Widget_Helper_Form_Element_Radio('isEnableJQuery', array(
+            'y'=>_t('是'),
+            'n'=>_t('否')
+        ), 'y', _t('是否加载JQuery'), _t("用于解决jquery冲突的问题，如果主题head中自带jquery，需要选择否；如果主题中未加载jquery，则需要选择是。"));
+		$form->addInput($isEnableJQuery->addRule('enum', _t(''), array('y', 'n')));
+		
 		$wemedia_cookietime = new Typecho_Widget_Helper_Form_Element_Text('wemedia_cookietime', array('value'), 1, _t('免登录Cookie保存时间(天)'), _t('指定使用免登录付费后几天内可以查看隐藏内容，默认为1天，不会记录到买入订单中。'));
         $form->addInput($wemedia_cookietime);
 		
@@ -627,10 +633,13 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      */
     public static function excerptEx($html, $widget, $lastResult){
 		$wechatfansRule='/<!--wechatfans start-->([\s\S]*?)<!--wechatfans end-->/i';
-		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
-		$version = substr(Typecho_Widget::widget('Widget_Options')->Version,0,3);
-		if($version<=1.1){
+		preg_match_all($wechatfansRule, $html, $hide_words);
+		if(!$hide_words[0]){
 			$wechatfansRule='/&lt;!--wechatfans start--&gt;([\s\S]*?)&lt;!--wechatfans end--&gt;/i';
+		}
+		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
+		preg_match_all($WeMediaRule, $html, $hide_words);
+		if(!$hide_words[0]){
 			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
 		}
 		$html=trim($html);
@@ -651,8 +660,8 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      */
     public static function contentEx($html, $widget, $lastResult){
 		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
-		$version = substr(Typecho_Widget::widget('Widget_Options')->Version,0,3);
-		if($version<=1.1){
+		preg_match_all($WeMediaRule, $html, $hide_words);
+		if(!$hide_words[0]){
 			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
 		}
 		$html = empty( $lastResult ) ? $html : $lastResult;
@@ -773,11 +782,21 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      * @return void
      */
     public static function parseExcerpt($obj,$length=140,$trim="..."){
+		$wechatfansRule='/<!--wechatfans start-->([\s\S]*?)<!--wechatfans end-->/i';
+		preg_match_all($wechatfansRule, $html, $hide_words);
+		if(!$hide_words[0]){
+			$wechatfansRule='/&lt;!--wechatfans start--&gt;([\s\S]*?)&lt;!--wechatfans end--&gt;/i';
+		}
+		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
+		preg_match_all($WeMediaRule, $html, $hide_words);
+		if(!$hide_words[0]){
+			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
+		}
 		$excerpt=trim($obj->excerpt);
-		if (preg_match_all('/&lt;!--wechatfans start--&gt;([\s\S]*?)&lt;!--wechatfans end--&gt;/i', $excerpt, $hide_words)){
+		if (preg_match_all($wechatfansRule, $excerpt, $hide_words)){
 			$excerpt = str_replace($hide_words[0], '', $excerpt);
 		}
-		if (preg_match_all('/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i', $excerpt, $hide_words)){
+		if (preg_match_all($WeMediaRule, $excerpt, $hide_words)){
 			$excerpt = str_replace($hide_words[0], '', $excerpt);
 		}
 		$excerpt=Typecho_Common::subStr(strip_tags($excerpt), 0, $length, $trim);
@@ -790,6 +809,11 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      * @return void
      */
     public static function parseContent($obj){
+		$WeMediaRule='/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i';
+		preg_match_all($WeMediaRule, $html, $hide_words);
+		if(!$hide_words[0]){
+			$WeMediaRule='/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i';
+		}
 		$db = Typecho_Db::get();
 		$options = Typecho_Widget::widget('Widget_Options');
 		$option=$options->plugin('WeMedia');
@@ -797,7 +821,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$content=trim($obj->content);
 		$query= $db->select()->from('table.contents')->where('cid = ?', $obj->cid); 
 		$row = $db->fetchRow($query);
-		if (preg_match_all('/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i', $content, $hide_content)){
+		if (preg_match_all($WeMediaRule, $content, $hide_content)){
 			if($option->wemedia_paytype=="spay"){
 				$wemedia_paytype='
 					<option value="wx">微信支付</option>
@@ -897,9 +921,12 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 	
 	public static function footer(){
 		$options = Typecho_Widget::widget('Widget_Options');
+		$option=$options->plugin('WeMedia');
 		$plug_url = $options->pluginUrl;
 		?>
+		<?php if($option->isEnableJQuery=="y"){?>
 		<script src="https://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+		<?php }?>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>
 		<script>
 			$("#wemediaPayPost").submit(function(){
