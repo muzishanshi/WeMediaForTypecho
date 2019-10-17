@@ -3,16 +3,16 @@
  * WeMediaForTypecho自媒体付费阅读插件<div class="WeMediaUpdateSet"><br /><a href="javascript:;" title="插件因兴趣于闲暇时间所写，故会有代码不规范、不专业和bug的情况，但完美主义促使代码还说得过去，如有bug或使用问题进行反馈即可。">鼠标轻触查看备注</a>&nbsp;<a href="http://club.tongleer.com" target="_blank">论坛</a>&nbsp;<a href="https://www.tongleer.com/api/web/pay.png" target="_blank">打赏</a>&nbsp;<a href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=diamond0422@qq.com" target="_blank">反馈</a></div><style>.WeMediaUpdateSet a{background: #4DABFF;padding: 5px;color: #fff;}</style>
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.13<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=13",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
+ * @version 1.0.14<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=14",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
  * @link http://www.tongleer.com/
- * @date 2019-09-07
+ * @date 2019-10-17
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
     public static function activate(){
 		WeMedia_Plugin::Judge_database();
 		Typecho_Plugin::factory('admin/write-post.php')->bottom = array('WeMedia_Plugin', 'tleWeMediaToolbar');
-		Typecho_Plugin::factory('Widget_Archive')->footer = array('WeMedia_Plugin', 'footer');
+		Typecho_Plugin::factory('Widget_Archive')->header = array('WeMedia_Plugin', 'header');
 		Typecho_Plugin::factory('Widget_Abstract_Contents')->contentEx = array('WeMedia_Plugin', 'contentEx');
 		Typecho_Plugin::factory('Widget_Abstract_Contents')->excerptEx = array('WeMedia_Plugin', 'excerptEx');
 		$db = Typecho_Db::get();
@@ -767,6 +767,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$html = str_replace("&gt;",">", $html);
 					}
 				}
+				self::script();
 			}else{
 				$html = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $html);
 				$html = str_replace("&lt;","<", $html);
@@ -912,6 +913,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$content = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $content);
 					}
 				}
+				self::script();
 			}else{
 				$content = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $content);
 			}
@@ -919,16 +921,21 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		return $content;
 	}
 	
-	public static function footer(){
+	public static function header(){
 		$options = Typecho_Widget::widget('Widget_Options');
 		$option=$options->plugin('WeMedia');
+		if($option->isEnableJQuery=="y"){
+			echo '<script src="https://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>';
+		}
+		echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>';
+	}
+	
+	public static function script(){
+		$options = Typecho_Widget::widget('Widget_Options');
 		$plug_url = $options->pluginUrl;
 		?>
-		<?php if($option->isEnableJQuery=="y"){?>
-		<script src="https://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
-		<?php }?>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>
 		<script>
+		$(function(){
 			$("#wemediaPayPost").submit(function(){
 				if($("#wemedia_islogin").html()=="y"&&$("#feeuid").val()==""){
 					layer.msg("需要先登录");
@@ -976,6 +983,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 				});
 				return false;
 			});
+		});
 		</script>
 		<?php
 	}

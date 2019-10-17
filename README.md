@@ -31,6 +31,10 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2019-10-17 V1.0.14
+
+	调整jquery加载位置，支持了一下pjax。
+	
 2019-09-07 V1.0.13
 
 	新增手机端长按二维码支付。
