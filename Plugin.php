@@ -767,7 +767,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$html = str_replace("&gt;",">", $html);
 					}
 				}
-				self::script();
+				$html .= self::script();
 			}else{
 				$html = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $html);
 				$html = str_replace("&lt;","<", $html);
@@ -913,7 +913,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						$content = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $content);
 					}
 				}
-				self::script();
+				$content.=self::script();
 			}else{
 				$content = str_replace($hide_content[0], '<div style="border:1px dashed #F60; padding:10px; margin:10px 0; line-height:200%;  background-color:#FFF4FF; overflow:hidden; clear:both;">'.$hide_content[1][0].'</div>', $content);
 			}
@@ -933,58 +933,58 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 	public static function script(){
 		$options = Typecho_Widget::widget('Widget_Options');
 		$plug_url = $options->pluginUrl;
-		?>
-		<script>
-		$(function(){
-			$("#wemediaPayPost").submit(function(){
-				if($("#wemedia_islogin").html()=="y"&&$("#feeuid").val()==""){
-					layer.msg("需要先登录");
-					return false;
-				}
-				var str = "确认要付款购买吗？";
-				layer.confirm(str, {
-					btn: ["付款","算了"]
-				}, function(){
-					var ii = layer.load(2, {shade:[0.1,"#fff"]});
-					$.ajax({
-						type : "POST",
-						url : "<?=$plug_url;?>/WeMedia/pay.php",
-						data : {"action":"paysubmit","feetype":$("#feetype").val(),"feecid":$("#feecid").val(),"feeuid":$("#feeuid").val(),"feecookie":$("#feecookie").val()},
-						dataType : "json",
-						success : function(data) {
-							layer.close(ii);
-							if(data.status=="ok"){
-								if(data.type=="spay"){
-									if(data.channel=="wx"){
-										str='<center><div>支持微信付款</div><div><img src="https://www.tongleer.com/api/web/?action=qrcode&url='+data.qrcode+'" width="200" /></div><div><a href="'+data.qrcode+'" target="_blank">跳转支付链接</a></div></center>';
-									}else if(data.channel=="alipay"){
-										str='<center><div>支持支付宝付款</div><div><a href="'+data.qrcode+'" target="_blank">跳转支付链接</a></div></center>';
+		return "
+			<script>
+			$(function(){
+				$(\"#wemediaPayPost\").submit(function(){
+					if($(\"#wemedia_islogin\").html()==\"y\"&&$(\"#feeuid\").val()==\"\"){
+						layer.msg(\"需要先登录\");
+						return false;
+					}
+					var str = \"确认要付款购买吗？\";
+					layer.confirm(str, {
+						btn: [\"付款\",\"算了\"]
+					}, function(){
+						var ii = layer.load(2, {shade:[0.1,\"#fff\"]});
+						$.ajax({
+							type : \"POST\",
+							url : \"".$plug_url."/WeMedia/pay.php\",
+							data : {\"action\":\"paysubmit\",\"feetype\":$(\"#feetype\").val(),\"feecid\":$(\"#feecid\").val(),\"feeuid\":$(\"#feeuid\").val(),\"feecookie\":$(\"#feecookie\").val()},
+							dataType : \"json\",
+							success : function(data) {
+								layer.close(ii);
+								if(data.status==\"ok\"){
+									if(data.type==\"spay\"){
+										if(data.channel==\"wx\"){
+											str=\"<center><div>支持微信付款</div><div><img src='https://www.tongleer.com/api/web/?action=qrcode&url='\"+data.qrcode+\" width='200' /></div><div><a href=\"+data.qrcode+\" target='_blank'>跳转支付链接</a></div></center>\";
+										}else if(data.channel==\"alipay\"){
+											str=\"<center><div>支持支付宝付款</div><div><a href=\"+data.qrcode+\" target='_blank'>跳转支付链接</a></div></center>\";
+										}
+									}else if(data.type==\"payjsnative\"){
+										str=\"<center><div>支持微信付款</div><div><img src='\"+data.qrcode+\"' width='200' /></div></center>\";
+									}else if(data.type==\"payjscashier\"){
+										open(\"".$plug_url."/WeMedia/pay.php?feetype=\"+$('#feetype').val()+\"&feecid=\"+$('#feecid').val()+\"&feeuid=\"+$('#feeuid').val()+\"&feecookie=\"+$('#feecookie').val());
 									}
-								}else if(data.type=="payjsnative"){
-									str='<center><div>支持微信付款</div><div><img src="'+data.qrcode+'" width="200" /></div></center>';
-								}else if(data.type=="payjscashier"){
-									open("<?=$plug_url;?>/WeMedia/pay.php?feetype="+$("#feetype").val()+"&feecid="+$("#feecid").val()+"&feeuid="+$("#feeuid").val()+"&feecookie="+$("#feecookie").val());
+								}else{
+									str=\"<center><div>请求支付过程出了一点小问题，稍后重试一次吧！</div></center>\";
 								}
-							}else{
-								str="<center><div>请求支付过程出了一点小问题，稍后重试一次吧！</div></center>";
+								layer.confirm(str, {
+									btn: [\"已付款\",\"算了\"]
+								},function(index){
+									window.location.reload();
+									layer.close(index);
+								});
+							},error:function(data){
+								layer.close(ii);
+								layer.msg(\"服务器错误\");
+								return false;
 							}
-							layer.confirm(str, {
-								btn: ["已付款","算了"]
-							},function(index){
-								window.location.reload();
-								layer.close(index);
-							});
-						},error:function(data){
-							layer.close(ii);
-							layer.msg("服务器错误");
-							return false;
-						}
+						});
 					});
+					return false;
 				});
-				return false;
 			});
-		});
-		</script>
-		<?php
+			</script>
+		";
 	}
 }
