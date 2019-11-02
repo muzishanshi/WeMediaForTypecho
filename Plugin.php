@@ -3,9 +3,9 @@
  * WeMediaForTypecho自媒体付费阅读插件<div class="WeMediaUpdateSet"><br /><a href="javascript:;" title="插件因兴趣于闲暇时间所写，故会有代码不规范、不专业和bug的情况，但完美主义促使代码还说得过去，如有bug或使用问题进行反馈即可。">鼠标轻触查看备注</a>&nbsp;<a href="http://club.tongleer.com" target="_blank">论坛</a>&nbsp;<a href="https://www.tongleer.com/api/web/pay.png" target="_blank">打赏</a>&nbsp;<a href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=diamond0422@qq.com" target="_blank">反馈</a></div><style>.WeMediaUpdateSet a{background: #4DABFF;padding: 5px;color: #fff;}</style>
  * @package WeMedia For Typecho
  * @author 二呆
- * @version 1.0.14<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=14",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
+ * @version 1.0.15<br /><span id="WeMediaUpdateInfo"></span><script>WeMediaXmlHttp=new XMLHttpRequest();WeMediaXmlHttp.open("GET","https://www.tongleer.com/api/interface/WeMedia.php?action=update&version=15",true);WeMediaXmlHttp.send(null);WeMediaXmlHttp.onreadystatechange=function () {if (WeMediaXmlHttp.readyState ==4 && WeMediaXmlHttp.status ==200){document.getElementById("WeMediaUpdateInfo").innerHTML=WeMediaXmlHttp.responseText;}}</script>
  * @link http://www.tongleer.com/
- * @date 2019-10-17
+ * @date 2019-11-02
  */
 class WeMedia_Plugin implements Typecho_Plugin_Interface{
     // 激活插件
@@ -353,18 +353,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
         ), 'payjs', _t('支付渠道'), _t("选择支付渠道，spay和payjs以下配置二选一即可。关于spay支付作者集成后已不再续费，推荐选择payjs支付，payjs是可以直接打款到微信的，比较安全快捷，相比官方微信支付还是可以的。"));
 		$form->addInput($wemedia_paytype->addRule('enum', _t(''), array('spay', 'payjs')));
 		
-		$wemedia_payjstype = new Typecho_Widget_Helper_Form_Element_Radio('wemedia_payjstype', array(
-            'native'=>_t('扫码支付'),
-            'cashier'=>_t('收银台支付')
-        ), 'native', _t('payjs支付方式'), _t("选择payjs支付方式，扫码支付为主动扫描二维码适合电脑端使用，收银台支付支持手机端长按二维码方式支付。"));
-		$form->addInput($wemedia_payjstype->addRule('enum', _t(''), array('native', 'cashier')));
-		
 		$payjs_wxpay_mchid = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_mchid', array('value'), "", _t('payjs商户号'), _t('在<a href="https://payjs.cn/" target="_blank">payjs官网</a>注册的商户号。'));
         $form->addInput($payjs_wxpay_mchid);
 		$payjs_wxpay_key = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_key', array('value'), "", _t('payjs通信密钥'), _t('在<a href="https://payjs.cn/" target="_blank">payjs官网</a>注册的通信密钥。'));
         $form->addInput($payjs_wxpay_key);
 		$payjs_wxpay_notify_url = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_notify_url', array('value'), $plug_url.'/WeMedia/notify_url.php', _t('payjs异步回调接口'), _t('支付完成后异步回调的接口地址。'));
         $form->addInput($payjs_wxpay_notify_url);
+		$payjs_wxpay_return_url = new Typecho_Widget_Helper_Form_Element_Text('payjs_wxpay_return_url', array('value'), $plug_url.'/WeMedia/return_url.php', _t('payjs同步回调接口'), _t('支付完成后同步回调的接口地址。'));
+        $form->addInput($payjs_wxpay_return_url);
 		
 		$spay_wxpay_id = new Typecho_Widget_Helper_Form_Element_Text('spay_wxpay_id', array('value'), "", _t('SPay微信(QQ)支付合作身份者ID'), _t('SPay网站（主：http://spay.swapteam.cn/；副：http://spay.8889838.com）注册授权微信支付的合作身份者id。'));
         $form->addInput($spay_wxpay_id);
@@ -379,7 +375,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 		$spay_pay_return_url = new Typecho_Widget_Helper_Form_Element_Text('spay_pay_return_url', array('value'), $plug_url.'/WeMedia/return_url.php', _t('SPay同步回调接口'), _t('支付完成后同步回调的接口地址'));
         $form->addInput($spay_pay_return_url);
 		
-		$mailsmtp = new Typecho_Widget_Helper_Form_Element_Text('mailsmtp', null, '', _t('smtp服务器(已验证QQ企业邮箱和126邮箱可成功发送)'), _t('用于用户中心发送邮箱验证码及其他邮件服务的smtp服务器地址，QQ企业邮箱：ssl://smtp.exmail.qq.com:465；126邮箱：smtp.126.com:25'));
+		$mailsmtp = new Typecho_Widget_Helper_Form_Element_Text('mailsmtp', null, '', _t('smtp服务器'), _t('用于用户中心发送邮箱验证码及其他邮件服务的smtp服务器地址，QQ企业邮箱：smtp.exmail.qq.com:465；126邮箱：smtp.126.com:25'));
         $form->addInput($mailsmtp);
 		$mailport = new Typecho_Widget_Helper_Form_Element_Text('mailport', null, '', _t('smtp服务器端口'), _t('用于用户中心发送邮箱验证码及其他邮件服务的smtp服务器端口'));
         $form->addInput($mailport);
@@ -714,9 +710,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
-								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input id="verifybtn" style="border:none;float:left;width:68px; height:34px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
 								<input type="hidden" name="action" value="paysubmit" />
 								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($widget->cid).'" />
+								<input type="hidden" id="feepermalink" name="feepermalink" value="'.$widget->permalink.'" />
 								<input type="hidden" id="feecookie" name="feecookie" value="'.$TypechoReadyPayCookie.'" />
 							</form>
 							<div style="clear:left;"></div>
@@ -749,9 +746,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
-								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input id="verifybtn" style="border:none;float:left;width:68px; height:34px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
 								<input type="hidden" name="action" value="paysubmit" />
 								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($widget->cid).'" />
+								<input type="hidden" id="feepermalink" name="feepermalink" value="'.$widget->permalink.'" />
 								<input type="hidden" id="feeuid" name="feeuid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
 							</form>
 							<div style="clear:left;"></div>
@@ -864,9 +862,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
-								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input id="verifybtn" style="border:none;float:left;width:68px; height:34px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
 								<input type="hidden" name="action" value="paysubmit" />
 								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($obj->cid).'" />
+								<input type="hidden" id="feepermalink" name="feepermalink" value="'.$obj->permalink.'" />
 								<input type="hidden" id="feecookie" name="feecookie" value="'.$TypechoReadyPayCookie.'" />
 							</form>
 							<div style="clear:left;"></div>
@@ -897,9 +896,10 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 								<div style="clear:left;"></div>
 								<span class="yzts" style="font-size:18px;float:left;">价格：</span>
 								<div style="border:none;float:left;width:80px; height:32px; line-height:30px; padding:0 5px; border:1px solid #FF6600;-moz-border-radius: 0px;  -webkit-border-radius: 0px;  border-radius:0px;">'.$row['wemedia_price'].'</div>
-								<input id="verifybtn" style="border:none;float:left;width:80px; height:32px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
+								<input id="verifybtn" style="border:none;float:left;width:68px; height:34px; line-height:32px; padding:0 5px; background-color:#F60; text-align:center; border:none; cursor:pointer; color:#FFF;-moz-border-radius: 0px; font-size:14px;  -webkit-border-radius: 0px;  border-radius:0px;" name="" type="submit" value="付款" />
 								<input type="hidden" name="action" value="paysubmit" />
 								<input type="hidden" id="feecid" name="feecid" value="'.urlencode($obj->cid).'" />
+								<input type="hidden" id="feepermalink" name="feepermalink" value="'.$obj->permalink.'" />
 								<input type="hidden" id="feeuid" name="feeuid" value="'.Typecho_Cookie::get('__typecho_uid').'" />
 							</form>
 							<div style="clear:left;"></div>
@@ -946,10 +946,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						btn: [\"付款\",\"算了\"]
 					}, function(){
 						var ii = layer.load(2, {shade:[0.1,\"#fff\"]});
+						var wemedia_payjstype=\"native\";
+						if(isWemediaWeiXin()){
+							wemedia_payjstype=\"cashier\";
+						}
 						$.ajax({
 							type : \"POST\",
 							url : \"".$plug_url."/WeMedia/pay.php\",
-							data : {\"action\":\"paysubmit\",\"feetype\":$(\"#feetype\").val(),\"feecid\":$(\"#feecid\").val(),\"feeuid\":$(\"#feeuid\").val(),\"feecookie\":$(\"#feecookie\").val()},
+							data : {\"action\":\"paysubmit\",\"wemedia_payjstype\":wemedia_payjstype,\"feetype\":$(\"#feetype\").val(),\"feepermalink\":$(\"#feepermalink\").val(),\"feecid\":$(\"#feecid\").val(),\"feeuid\":$(\"#feeuid\").val(),\"feecookie\":$(\"#feecookie\").val()},
 							dataType : \"json\",
 							success : function(data) {
 								layer.close(ii);
@@ -960,10 +964,11 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 										}else if(data.channel==\"alipay\"){
 											str=\"<center><div>支持支付宝付款</div><div><a href=\"+data.qrcode+\" target='_blank'>跳转支付链接</a></div></center>\";
 										}
-									}else if(data.type==\"payjsnative\"){
+									}else if(data.type==\"native\"){
 										str=\"<center><div>支持微信付款</div><div><img src='\"+data.qrcode+\"' width='200' /></div></center>\";
-									}else if(data.type==\"payjscashier\"){
-										open(\"".$plug_url."/WeMedia/pay.php?feetype=\"+$('#feetype').val()+\"&feecid=\"+$('#feecid').val()+\"&feeuid=\"+$('#feeuid').val()+\"&feecookie=\"+$('#feecookie').val());
+									}else if(data.type==\"cashier\"){
+										open(\"".$plug_url."/WeMedia/pay.php?wemedia_payjstype=\"+wemedia_payjstype+\"&feetype=\"+$('#feetype').val()+\"&feepermalink=\"+$('#feepermalink').val()+\"&feecid=\"+$('#feecid').val()+\"&feeuid=\"+$('#feeuid').val()+\"&feecookie=\"+$('#feecookie').val());
+										return false;
 									}
 								}else{
 									str=\"<center><div>请求支付过程出了一点小问题，稍后重试一次吧！</div></center>\";
@@ -983,6 +988,14 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					});
 					return false;
 				});
+				function isWemediaWeiXin(){
+					var ua = window.navigator.userAgent.toLowerCase();
+					if(ua.match(/MicroMessenger/i) == \"micromessenger\"){
+						return true;
+					}else{
+						return false;
+					}
+				}
 			});
 			</script>
 		";

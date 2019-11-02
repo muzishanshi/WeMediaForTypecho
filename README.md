@@ -31,6 +31,10 @@
 Github：https://github.com/muzishanshi/WeMediaForTypecho
 
 #### 更新记录：
+2019-11-02 V1.0.15
+
+	整合payjs的扫码支付和收银台支付为一体，重新适配电脑和微信端支付情况。
+	
 2019-10-17 V1.0.14
 
 	调整jquery加载位置，支持了一下pjax。

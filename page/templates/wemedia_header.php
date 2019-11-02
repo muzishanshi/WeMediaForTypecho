@@ -18,3 +18,11 @@
   <script src="https://apps.bdimg.com/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 </head>
 <body>
+<!--[if lt IE 9]>
+    <script type="text/javascript">
+        var str = '<p class="browsehappy">你正在使用<strong>过时</strong>的浏览器，此网站框架暂不支持。 请 <a href="https://browsehappy.com/" target="_blank">升级浏览器</a>以获得更好的体验！</p>';
+        document.writeln("<pre style='text-align:center;color:#fff;background-color:#0cc; height:100%;border:0;position:fixed;top:0;left:0;width:100%;z-index:1234'>" +
+                "<h2 style='padding-top:200px;margin:0'><strong>" + str + "<br/></strong></h2><h2 style='margin:0'><strong>如果你的使用的是双核浏览器,请切换到极速模式访问<br/></strong></h2></pre>");
+        document.execCommand("Stop");
+    </script>
+<![endif]-->

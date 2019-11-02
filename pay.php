@@ -30,6 +30,8 @@ if(($ll_nowtime - $ll_lasttime) < 3){//现在时间-开始登录时间 来进行
 
 $action = isset($_POST['action']) ? addslashes($_POST['action']) : '';
 if($action=='paysubmit'){
+	$wemedia_payjstype = isset($_POST['wemedia_payjstype']) ? addslashes($_POST['wemedia_payjstype']) : '';
+	$feepermalink = isset($_POST['feepermalink']) ? addslashes($_POST['feepermalink']) : '';
 	$feetype = isset($_POST['feetype']) ? addslashes($_POST['feetype']) : '';
 	$feecookie = isset($_POST['feecookie']) ? addslashes($_POST['feecookie']) : '';
 	$feecid = isset($_POST['feecid']) ? intval(urldecode($_POST['feecid'])) : '';
@@ -83,7 +85,7 @@ if($action=='paysubmit'){
 			}
 			break;
 		case "payjs":
-			switch($option->wemedia_payjstype){
+			switch($wemedia_payjstype){
 				case "native":
 					$time=time();
 					$arr = [
@@ -92,7 +94,8 @@ if($action=='paysubmit'){
 						'total_fee' => $rowContent["wemedia_price"]*100,             // 金额,单位:分
 						'attach'=>$rowContent["wemedia_price"]// 自定义数据
 					];
-					$payjs = new Payjs($arr,$option->payjs_wxpay_mchid,$option->payjs_wxpay_key,$option->payjs_wxpay_notify_url);
+					$payjs_wxpay_return_url=$option->payjs_wxpay_return_url."?id=".$arr['out_trade_no']."&url=".base64_encode($feepermalink);
+					$payjs = new Payjs($arr,$option->payjs_wxpay_mchid,$option->payjs_wxpay_key,$payjs_wxpay_return_url,$option->payjs_wxpay_notify_url);
 					$res = $payjs->pay();
 					$rst=json_decode($res,true);
 					if($rst["return_code"]==1){
@@ -108,14 +111,14 @@ if($action=='paysubmit'){
 						);
 						$insert = $db->insert('table.wemedia_fee_item')->rows($data);
 						$insertId = $db->query($insert);
-						$json=json_encode(array("status"=>"ok","type"=>"payjsnative","channel"=>"wx","qrcode"=>$rst["qrcode"]));
+						$json=json_encode(array("status"=>"ok","type"=>"native","channel"=>"wx","qrcode"=>$rst["qrcode"]));
 						echo $json;
 						exit;
 						
 					}
 					break;
 				case "cashier":
-					$json=json_encode(array("status"=>"ok","type"=>"payjscashier"));
+					$json=json_encode(array("status"=>"ok","type"=>"cashier"));
 					echo $json;
 					exit;
 					break;
@@ -126,6 +129,8 @@ if($action=='paysubmit'){
 	echo $json;
 	exit;
 }else{
+	$wemedia_payjstype = isset($_GET['wemedia_payjstype']) ? addslashes($_GET['wemedia_payjstype']) : '';
+	$feepermalink = isset($_GET['feepermalink']) ? addslashes($_GET['feepermalink']) : '';
 	$feetype = isset($_GET['feetype']) ? addslashes($_GET['feetype']) : '';
 	$feecookie = isset($_GET['feecookie']) ? addslashes($_GET['feecookie']) : '';
 	$feecid = isset($_GET['feecid']) ? intval(urldecode($_GET['feecid'])) : '';
@@ -140,7 +145,7 @@ if($action=='paysubmit'){
 	
 	switch($option->wemedia_paytype){
 		case "payjs":
-			switch($option->wemedia_payjstype){
+			switch($wemedia_payjstype){
 				case "cashier":
 					$cashierapi="https://payjs.cn/api/cashier";
 					$time=time();
@@ -150,9 +155,11 @@ if($action=='paysubmit'){
 						'total_fee' => $rowContent["wemedia_price"]*100,             // 金额,单位:分
 						'attach' => $rowContent["wemedia_price"]// 自定义数据
 					];
-					$payjs = new Payjs($arr,$option->payjs_wxpay_mchid,$option->payjs_wxpay_key,$option->payjs_wxpay_notify_url,$cashierapi);
+					$payjs_wxpay_return_url=$option->payjs_wxpay_return_url."?id=".$arr['out_trade_no']."&url=".base64_encode($feepermalink);
+					$payjs = new Payjs($arr,$option->payjs_wxpay_mchid,$option->payjs_wxpay_key,$payjs_wxpay_return_url,$option->payjs_wxpay_notify_url,$cashierapi);
 					$data = $arr;
 					$data['mchid'] = $option->payjs_wxpay_mchid;
+					$data['callback_url'] = $payjs_wxpay_return_url;
 					$data['notify_url'] = $option->payjs_wxpay_notify_url;
 					$data['auto'] = 1;
 					$data['hide'] = 1;
@@ -176,6 +183,7 @@ if($action=='paysubmit'){
 							<input type="hidden" name="out_trade_no" value="'.$arr["out_trade_no"].'" />
 							<input type="hidden" name="body" value="'.$arr["body"].'" />
 							<input type="hidden" name="attach" value="'.$arr["attach"].'" />
+							<input type="hidden" name="callback_url" value="'.$payjs_wxpay_return_url.'" />
 							<input type="hidden" name="notify_url" value="'.$option->payjs_wxpay_notify_url.'" />
 							<input type="hidden" name="auto" value="1" />
 							<input type="hidden" name="hide" value="1" />
