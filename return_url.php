@@ -43,6 +43,25 @@ switch($option->wemedia_paytype){
 	case "payjs":
 		$out_trade_no = isset($_GET['id']) ? addslashes($_GET['id']) : 0;
 		$url = isset($_GET['url']) ? addslashes(base64_decode($_GET['url'])) : "";
+		?>
+		<link href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+		<body background="https://ww2.sinaimg.cn/large/a15b4afegy1fpp139ax3wj200o00g073.jpg">
+		<div class="container" style="padding-top:20px;">
+			<div class="col-xs-12 col-sm-10 col-lg-8 center-block" style="float: none;">
+				<div class="panel panel-primary">
+					<div class="panel-body">
+						<center>
+							<div class="alert alert-success">
+								<a href="<?php echo $url;?>">返回</a>
+							</div>
+						</center>
+					</div>
+				</div>
+			</div>
+		</div>
+		</body>
+		<?php
+		exit;
 		$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feeid = ?', $out_trade_no); 
 		$rowItem = $db->fetchRow($queryItem);
 		if(@$rowItem['feestatus']==1){
