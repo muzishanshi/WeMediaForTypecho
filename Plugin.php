@@ -698,6 +698,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
      * @return void
      */
     public static function contentEx($html, $widget, $lastResult){
+		if(!isset($_SESSION)){session_start();}
 		if (preg_match_all('/<!--WeMedia start-->([\s\S]*?)<!--WeMedia end-->/i', $html, $matches)){
 			$hide_content=$matches;
 		}else if(preg_match_all('/&lt;!--WeMedia start--&gt;([\s\S]*?)&lt;!--WeMedia end--&gt;/i', $html, $matches)){
@@ -750,7 +751,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 						}
 					}else if($option->wemedia_itemtype=="mail"){
 						$TypechoReadyPayMail = isset($_GET['TypechoReadyPayMail']) ? addslashes(trim($_GET['TypechoReadyPayMail'])) : '';
-						if($TypechoReadyPayMail){
+						if($TypechoReadyPayMail&&$TypechoReadyPayMail==$_SESSION["new".$options->title]){
 							$queryItem= $db->select()->from('table.wemedia_fee_item')->where('feemail = ?', $TypechoReadyPayMail)->where('feestatus = ?', 1)->where('feecid = ?', $widget->cid); 
 							$rowItem = $db->fetchRow($queryItem);
 							if($rowItem){
