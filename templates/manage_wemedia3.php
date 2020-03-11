@@ -48,7 +48,7 @@ if($versions[1]>="19.10.20"){
 												$page_now=1;
 											}
 											$resultTotal = $db->fetchAll($queryTotal);
-											$page_rec=1;
+											$page_rec=20;
 											$totalrec=count($resultTotal);
 											$page=ceil($totalrec/$page_rec);
 											if($page_now>$page){
