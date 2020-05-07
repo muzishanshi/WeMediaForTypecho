@@ -826,7 +826,7 @@ class WeMedia_Plugin implements Typecho_Plugin_Interface{
 					$queryUser= $db->select()->from('table.users')->where('uid = ?', $row['authorId']); 
 					$rowUser = $db->fetchRow($queryUser);
 					$wemedia_info=$rowUser["wemedia_info"]==''?'':'作者简介：'.$rowUser["wemedia_info"];
-					if(count($rowItem)==0){
+					if(Typecho_Cookie::get('__typecho_uid')==0||count($rowItem)==0){
 						foreach ($hide_content[0] as $k => $m) {
 							if ($k == 0) {
 								$hide_notice='
